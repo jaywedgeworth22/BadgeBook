@@ -40,4 +40,4 @@ docs/                     Vision, architecture, matching rules, roadmap
 
 ## License
 
-Proprietary — all rights reserved (for now).
+Apache License 2.0 — see [LICENSE](LICENSE).

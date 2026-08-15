@@ -21,9 +21,10 @@ public enum LogoSourceError: Error, Sendable {
 public enum ImageDimensions {
     public static func read(_ data: Data) -> (Int, Int)? {
         if data.count >= 24, data.starts(with: [0x89, 0x50, 0x4E, 0x47]) { // PNG
-            let w = data.withUnsafeBytes { $0.load(fromByteOffset: 16, as: UInt32.self) }.bigEndian
-            let h = data.withUnsafeBytes { $0.load(fromByteOffset: 20, as: UInt32.self) }.bigEndian
-            return (Int(w), Int(h))
+            func be32(_ o: Int) -> Int {
+                Int(data[o]) << 24 | Int(data[o + 1]) << 16 | Int(data[o + 2]) << 8 | Int(data[o + 3])
+            }
+            return (be32(16), be32(20))
         }
         if data.count >= 4, data[0] == 0xFF, data[1] == 0xD8 { // JPEG
             var i = 2

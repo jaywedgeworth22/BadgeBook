@@ -40,6 +40,10 @@ Notes:
 2. **Wikimedia Commons API** — excellent for major corporate wordmarks
    ("File:Exxon logo.svg"). Rasterize SVG server-side; `upload.wikimedia.org`
    thumbnailing rejects bot-y UAs, send a descriptive one.
+   - Search with `srsearch=intitle:<name> intitle:logo` — plain "<name> logo"
+     matches photo *descriptions* ("Walmart Neighborhood Market"), not files.
+   - Commons throttles rapid sequential API bursts; identical contacts may
+     intermittently return zero candidates. Back off and retry.
 3. **Google Custom Search API** (`searchType=image`, user-provided key,
    100 free/day) — the only ToS-safe Google path on iOS/web.
 4. **Google Images scraping** (macOS power-user mode only): real browser,

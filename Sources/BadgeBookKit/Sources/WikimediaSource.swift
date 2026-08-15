@@ -36,7 +36,10 @@ public struct WikimediaSource: LogoSource, Sendable {
     }
 
     public func candidates(forBrandName name: String) async throws -> [LogoCandidate] {
-        let query = "\(name) logo".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
+        // intitle: search — plain "Walmart logo" matches photo descriptions,
+        // not file titles (dogfood lesson).
+        let quoted = name.replacingOccurrences(of: "\"", with: "")
+        let query = "intitle:\(quoted) intitle:logo".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
         guard let searchURL = URL(string:
             "https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=\(query)&srnamespace=6&format=json&srlimit=5") else { return [] }
         var req = URLRequest(url: searchURL)

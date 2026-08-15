@@ -110,6 +110,12 @@ public struct ChangeSet: Sendable {
         public let newImageData: Data
         /// nil means the contact previously had no image.
         public let previousImageData: Data?
+
+        public init(contactID: String, newImageData: Data, previousImageData: Data?) {
+            self.contactID = contactID
+            self.newImageData = newImageData
+            self.previousImageData = previousImageData
+        }
     }
     public let createdAt: Date
     public var entries: [Entry]
