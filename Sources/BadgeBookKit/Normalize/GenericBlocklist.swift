@@ -8,7 +8,9 @@ public enum GenericBlocklist {
     static let genericExact: Set<String> = [
         "hospital", "gift card", "manager", "market manager", "medico", "jerry",
         "verification", "verification code", "verification codes", "candy",
-        "link", "cash", "info", "office", "reception", "front desk"
+        "link", "cash", "info", "office", "reception", "front desk",
+        "support", "customer service", "voicemail", "suspected spam",
+        "emergency", "spam risk", "nice", "meme"
     ]
 
     /// Patterns that mark devices/services rather than brands.

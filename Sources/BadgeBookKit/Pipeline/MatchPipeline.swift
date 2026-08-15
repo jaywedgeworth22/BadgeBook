@@ -62,10 +62,16 @@ public struct MatchPipeline: Sendable {
         let ranked = CandidateRanker.rank(measured)
         let best = ranked.first
         let similarityOK = best.map { NameNormalizer.passesSimilarity(query: query, brandName: $0.altText ?? query) } ?? false
-        let conf = CandidateRanker.confidence(for: best,
+        var conf = CandidateRanker.confidence(for: best,
                                               nameSimilarityPassed: similarityOK,
                                               homonymRisk: flags.contains("homonym-risk"),
                                               domainAgrees: domain != nil)
+        // Domain came from the contact's own data (strong signal): a square
+        // asset served for that domain earns HIGH even without icon typing.
+        if domain != nil, best?.isSquareish == true, conf == .medium {
+            conf = .high
+            flags.append("domain-match")
+        }
         return MatchResult(contactID: c.id, contactClass: klass, candidates: ranked,
                            confidence: conf, flags: flags)
     }
