@@ -10,6 +10,7 @@ Package.resolved
 node_modules/
 .next/
 .vercel
+web/dist/
 
 # OS / editor
 .DS_Store

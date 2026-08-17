@@ -1,0 +1,9 @@
+BadgeBook
+Copyright 2026 Jay Wedgeworth
+
+This product includes Crest (https://github.com/jaywedgeworth22/crest),
+Copyright 2026 Jay Wedgeworth, imported with git history under vendor/crest
+and ported into BadgeBookKit and BadgeBook Web.
+
+Licensed under the Apache License, Version 2.0.
+See the LICENSE file for the full text.

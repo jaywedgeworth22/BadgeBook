@@ -19,9 +19,9 @@
   a Swift package with zero platform-specific imports except a thin
   `ContactsProvider` protocol. macOS/iOS implement it over `Contacts.framework`;
   the web backend implements it over parsed vCards.
-- **Web engine parity**: the web service reimplements the same rules in
-  TypeScript (rules are documented in MATCHING-ENGINE.md as the source of
-  truth; both implementations must pass the same golden test corpus).
+- **Web engine parity**: `web/src/engine` reimplements the same rules in
+  TypeScript (MATCHING-ENGINE.md is the source of truth; Swift and TS tests
+  cover the Crest catalog/phone/classification cases).
 
 ## BadgeBookKit modules
 
@@ -29,11 +29,12 @@
 | --- | --- |
 | `Models` | `ContactIdentity`, `LogoCandidate`, `Confidence`, `MatchResult`, `ChangeSet` (undo) |
 | `Contacts` | `ContactsProvider` protocol; classification (person / business / non-brand) |
-| `Normalize` | name cleaning, alias table, generic blocklist, domain derivation |
-| `Sources` | `LogoSource` protocol; Brandfetch, Wikimedia, Google CSE implementations; rate-limit + retry policy |
-| `Rank` | aspect/icon scoring, padding, similarity gate, top-N candidate list |
-| `Pipeline` | orchestration → `MatchResult` with confidence tier |
-| `Store` | apply approved changes; persist undo log (previous images) |
+| `Normalize` | name cleaning, alias table, generic blocklist, domain derivation, **Crest company catalog + phone directory** |
+| `Identity` | website → work email → catalog → phone → flagged `{name}.com` guess |
+| `Sources` | `LogoSource` protocol; preferred marks, Simple Icons, Brandfetch, Wikimedia, CompaniesLogo picker, favicon fallbacks |
+| `Rank` | aspect/icon/alpha scoring, padding, similarity gate, top-N candidate list |
+| `Pipeline` | orchestration → `MatchResult` with confidence tier (guess/favicon never HIGH) |
+| `Store` | apply approved changes; persist undo log; shared `ReviewSession` |
 
 ## Data flow (native apps)
 
@@ -54,7 +55,8 @@
   shared key) → review UI identical in spirit → download updated `.vcf`.
 - Privacy: vCard held in memory only; deleted after download. No account
   needed for free tier.
-- Stack proposal: Next.js + Vercel, Stripe for Pro, engine in TS.
+- Stack: Vite + TypeScript engine in `web/src/engine` (Crest import/compose
+  strengths, BadgeBook review buckets). Stripe Pro remains a later phase.
 
 ## Rate-limit & key policy
 

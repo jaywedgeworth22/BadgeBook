@@ -15,12 +15,17 @@ public enum CandidateRanker {
         if c.isPictographic { s += 40 }
         // §5.4 official-source bonus
         switch c.source {
+        case .preferred: s += 48
+        case .simpleIcons: s += 36
+        case .companiesLogo: s += 32
         case .brandfetch: s += 20
         case .wikimedia: s += 18
         case .googleCSE: s += 10
+        case .favicon: s += 8
         case .googleScrape: s += 6
         case .manual: s += 50 // user's own pick always wins review ties
         }
+        if c.hasAlpha == true { s += 12 }
         if let host = c.imageURL.host?.lowercased() {
             let aggregators = ["logodix.", "seeklogo.", "logos-world.", "1000logos.", "stickpng."]
             if aggregators.contains(where: { host.contains($0) }) { s -= 12 }
@@ -50,7 +55,8 @@ public enum CandidateRanker {
                                   domainAgrees: Bool) -> Confidence {
         guard let best, nameSimilarityPassed else { return .skip }
         var tier: Confidence
-        if best.isSquareish, best.isPictographic, [.brandfetch, .wikimedia, .manual].contains(best.source) {
+        let iconic: Set<SourceKind> = [.brandfetch, .wikimedia, .manual, .preferred, .simpleIcons, .companiesLogo]
+        if best.isSquareish, best.isPictographic, iconic.contains(best.source) {
             tier = .high
         } else if best.isSquareish {
             tier = .medium

@@ -31,6 +31,7 @@ public final class CNContactsProvider: ContactsProvider, @unchecked Sendable {
             CNContactOrganizationNameKey as CNKeyDescriptor,
             CNContactEmailAddressesKey as CNKeyDescriptor,
             CNContactUrlAddressesKey as CNKeyDescriptor,
+            CNContactPhoneNumbersKey as CNKeyDescriptor,
             CNContactImageDataAvailableKey as CNKeyDescriptor,
             CNContactImageDataKey as CNKeyDescriptor
         ]
@@ -57,6 +58,7 @@ public final class CNContactsProvider: ContactsProvider, @unchecked Sendable {
                 guard raw.lowercased().hasPrefix("http") else { return nil }
                 return URL(string: raw)?.host
             }
+            let phones = contact.phoneNumbers.map { $0.value.stringValue }
             let display = [given, family].joined(separator: " ").trimmingCharacters(in: .whitespaces)
             out.append(ContactIdentity(
                 id: contact.identifier,
@@ -66,6 +68,7 @@ public final class CNContactsProvider: ContactsProvider, @unchecked Sendable {
                 organization: org.isEmpty ? nil : org,
                 emailDomains: emailDomains,
                 websiteHosts: websiteHosts,
+                phoneNumbers: phones,
                 hasImage: contact.imageDataAvailable
             ))
         }

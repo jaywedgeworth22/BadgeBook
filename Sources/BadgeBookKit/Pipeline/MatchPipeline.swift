@@ -1,6 +1,6 @@
 import Foundation
 
-/// Orchestrates classification → normalization → sources → ranking.
+/// Orchestrates classification → normalization → identity → sources → ranking.
 /// Deterministic for a fixed source set (ARCHITECTURE: one engine, three shells).
 public struct MatchPipeline: Sendable {
     private let sources: [any LogoSource]
@@ -12,12 +12,40 @@ public struct MatchPipeline: Sendable {
         self.fetchImage = fetchImage
     }
 
+    /// BadgeBook review-first classes, plus Crest's "lone first/last that is a firm".
     public func classify(_ c: ContactIdentity) -> ContactClass {
-        let hasPersonName = !(c.givenName ?? "").isEmpty || !(c.familyName ?? "").isEmpty
-        if hasPersonName { return .person }
-        let cleaned = NameNormalizer.clean(c.organization?.isEmpty == false ? c.organization! : c.displayName)
+        let orgOrName = c.organization?.isEmpty == false ? c.organization! : c.displayName
+        let cleaned = NameNormalizer.clean(orgOrName)
         if GenericBlocklist.isGeneric(cleaned) { return .nonBrand }
+
+        let given = (c.givenName ?? "").trimmingCharacters(in: .whitespaces)
+        let family = (c.familyName ?? "").trimmingCharacters(in: .whitespaces)
+        let hasPersonName = !given.isEmpty || !family.isEmpty
+        if hasPersonName {
+            // Crest: a lone given or family name that is a known firm (and has
+            // no personal email) is the company, not a person.
+            if inferCompanyFromLoneName(c) != nil { return .businessCard }
+            return .person
+        }
         return .businessCard
+    }
+
+    /// Crest `inferCompanyOrganization`: lone first/last that is a catalog firm.
+    public func inferCompanyFromLoneName(_ c: ContactIdentity) -> String? {
+        let given = NameNormalizer.clean(c.givenName ?? "")
+        let family = NameNormalizer.clean(c.familyName ?? "")
+        let onlyGiven = !given.isEmpty && family.isEmpty
+        let onlyFamily = !family.isEmpty && given.isEmpty
+        let unstructured = given.isEmpty && family.isEmpty
+        guard onlyGiven || onlyFamily || unstructured else { return nil }
+
+        let consumerEmail = c.emailDomains.contains { DomainDeriver.freemail.contains($0.lowercased()) }
+        if consumerEmail { return nil }
+
+        let candidate = NameNormalizer.clean(onlyGiven ? given : onlyFamily ? family : c.displayName)
+        guard !candidate.isEmpty, !looksLikePersonName(candidate) else { return nil }
+        if CompanyCatalog.domain(forName: candidate) != nil { return candidate }
+        return nil
     }
 
     public func match(_ c: ContactIdentity) async -> MatchResult {
@@ -29,16 +57,20 @@ public struct MatchPipeline: Sendable {
             return MatchResult(contactID: c.id, contactClass: klass, candidates: [], confidence: .skip, flags: ["photo-protected"])
         }
 
-        let rawName = c.organization?.isEmpty == false ? c.organization! : c.displayName
+        let rawName = inferCompanyFromLoneName(c)
+            ?? (c.organization?.isEmpty == false ? c.organization! : c.displayName)
         var query = NameNormalizer.clean(rawName)
         var flags: [String] = []
         if let tail = NameNormalizer.brandTail(rawName) { query = tail; flags.append("brand-tail") }
         if GenericBlocklist.isHomonymRisk(query) { flags.append("homonym-risk") }
 
-        let domain = DomainDeriver.derive(websiteHosts: c.websiteHosts, emailDomains: c.emailDomains)
+        let identity = IdentityResolver.resolve(c, brandName: query)
+        if let identity {
+            flags.append("via-\(identity.via.rawValue)")
+        }
 
         var raw: [LogoCandidate] = []
-        if let domain {
+        if let domain = identity?.domain {
             for s in sources {
                 if let found = try? await s.candidates(forDomain: domain) { raw.append(contentsOf: found) }
             }
@@ -49,12 +81,15 @@ public struct MatchPipeline: Sendable {
             }
         }
 
-        // Fill in dimensions for the square rule when cheap to do so.
         var measured: [LogoCandidate] = []
         for var cand in raw {
-            if cand.pixelWidth == nil, let data = try? await fetchImage(cand.imageURL),
-               let (w, h) = ImageDimensions.read(data) {
-                cand.pixelWidth = w; cand.pixelHeight = h
+            if cand.pixelWidth == nil || cand.hasAlpha == nil,
+               let data = try? await fetchImage(cand.imageURL) {
+                if ImageFlags.isTooSmall(data) { continue }
+                if cand.pixelWidth == nil, let (w, h) = ImageDimensions.read(data) {
+                    cand.pixelWidth = w; cand.pixelHeight = h
+                }
+                if cand.hasAlpha == nil { cand.hasAlpha = ImageFlags.hasAlpha(data) }
             }
             measured.append(cand)
         }
@@ -62,17 +97,35 @@ public struct MatchPipeline: Sendable {
         let ranked = CandidateRanker.rank(measured)
         let best = ranked.first
         let similarityOK = best.map { NameNormalizer.passesSimilarity(query: query, brandName: $0.altText ?? query) } ?? false
+        let domainAgrees = identity != nil && identity?.via != .guess
         var conf = CandidateRanker.confidence(for: best,
                                               nameSimilarityPassed: similarityOK,
                                               homonymRisk: flags.contains("homonym-risk"),
-                                              domainAgrees: domain != nil)
-        // Domain came from the contact's own data (strong signal): a square
-        // asset served for that domain earns HIGH even without icon typing.
-        if domain != nil, best?.isSquareish == true, conf == .medium {
+                                              domainAgrees: domainAgrees)
+        // Contact-owned website/email, or Crest catalog/phone: a square asset
+        // for that domain earns HIGH even without icon typing.
+        if domainAgrees, best?.isSquareish == true, conf == .medium {
             conf = .high
             flags.append("domain-match")
         }
+        // Crest `{name}.com` guess must never auto-apply.
+        if identity?.via == .guess {
+            conf = min(conf, .medium)
+            flags.append("guessed-domain")
+        }
+        // Favicon-only hits stay in Review (Crest used them as last resort).
+        if best?.source == .favicon {
+            conf = min(conf, .medium)
+            flags.append("favicon-fallback")
+        }
         return MatchResult(contactID: c.id, contactClass: klass, candidates: ranked,
                            confidence: conf, flags: flags)
+    }
+
+    private func looksLikePersonName(_ name: String) -> Bool {
+        let cleaned = NameNormalizer.clean(name).replacingOccurrences(of: ",", with: " ")
+        let parts = cleaned.split(separator: " ").map(String.init)
+        guard (2...4).contains(parts.count) else { return false }
+        return parts.allSatisfy { $0.range(of: #"^[A-Za-z][A-Za-z'.-]{1,30}$"#, options: .regularExpression) != nil }
     }
 }
