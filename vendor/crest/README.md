@@ -1,0 +1,55 @@
+# Crest
+
+Company logos for the contacts that need them.
+
+Crest finds company cards in an address book, suggests a simple square or round mark, and only writes a photo after you approve it. Existing pictures are never replaced unless you tap **Replace**.
+
+**Live site:** [contactlogo.grok.me](https://contactlogo.grok.me)
+
+## License
+
+[Apache License 2.0](LICENSE) — Copyright 2026 Jay Wedgeworth.
+
+## What it does
+
+- Import from **Google Contacts**, a phone contact picker, or a **vCard / Google CSV** (including large iPhone exports)
+- Match companies by website, work email, **company name**, or **phone**
+- Prefer transparent iconic marks (CompaniesLogo, Simple Icons, then favicons)
+- Review: approve, try another, upload your own, or skip
+- Keep a backup before any write back to Contacts
+- Works as a website, an iOS home-screen app, or an Android app (PWA)
+
+People who *work at* a company stay people. A lone first or last name that is actually a firm (and has no personal email) is treated as the company. Store locations like `Walgreens (Mason Rd in Cypress)` match **Walgreens**.
+
+## Run it
+
+```bash
+npm install
+npm run dev
+```
+
+Then open the printed local URL. Production build:
+
+```bash
+npm run build
+npm run typecheck
+```
+
+Optional: set `GOOGLE_CLIENT_ID` (or `VITE_GOOGLE_CONTACTS_CLIENT_ID`) so **Import Google Contacts** can read the People API. Without it, export a vCard or Google CSV from [contacts.google.com](https://contacts.google.com/) and import that file.
+
+## Hosting
+
+| Place | What updates it |
+| --- | --- |
+| This GitHub repo | Commits on `main` |
+| [contactlogo.grok.me](https://contactlogo.grok.me) | Grok **Publish** of the Crest project |
+
+Grok hosts the live `*.grok.me` site from the Crest project in Grok, not from a GitHub Action. After changes land here, publish again in Grok so the live site matches. Pull requests on GitHub do not deploy to grok.me by themselves.
+
+## Source layout
+
+- `src/routes` — pages and `/api/logo`, `/api/resolve`, Google config
+- `src/lib` — contacts, vCard, logos, identity, Google import
+- `src/store/crest.ts` — local address book (IndexedDB)
+- `migrations` — logo cache schema (Postgres / PGLite)
+- `public` — icons and share card
