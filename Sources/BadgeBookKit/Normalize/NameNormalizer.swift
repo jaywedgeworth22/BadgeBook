@@ -3,16 +3,34 @@ import Foundation
 /// MATCHING-ENGINE §2: turn a raw display name into a search-safe brand query.
 public enum NameNormalizer {
 
+    /// Legal suffixes Crest strips before catalog lookup ("Apple Inc" → "Apple").
+    static let legalSuffix = try! NSRegularExpression(
+        pattern: #"\s*,?\s*(inc\.?|incorporated|llc|l\.l\.c\.?|ltd\.?|limited|corp\.?|corporation|co\.?|company|gmbh|ag|plc|holdings|group|llc\.|p\.c\.|llp)\s*$"#,
+        options: .caseInsensitive
+    )
+
     /// "Walgreens (Mason Rd / Cypress)" → "Walgreens"
     public static func clean(_ raw: String) -> String {
         var s = raw
-        // strip parentheticals (location qualifiers, device models)
-        while let range = s.range(of: #"\s*\([^)]*\)"#, options: .regularExpression) {
-            s.removeSubrange(range)
-        }
+        // Crest + BadgeBook: drop store locations in (), [], {}
+        s = s.replacingOccurrences(of: #"\s*[\(\[\{][^)\]\}]*[\)\]\}]"#, with: " ", options: .regularExpression)
         s = s.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
         s = s.trimmingCharacters(in: CharacterSet(charactersIn: " -–—,"))
         return s
+    }
+
+    /// Catalog key: cleaned, legal-suffix-stripped, lowercased.
+    public static func companyKey(_ raw: String) -> String {
+        var s = clean(raw)
+        let range = NSRange(s.startIndex..., in: s)
+        s = legalSuffix.stringByReplacingMatches(in: s, options: [], range: range, withTemplate: "")
+        s = s.replacingOccurrences(of: ".", with: "")
+        s = s.replacingOccurrences(of: ",", with: "")
+        s = s.replacingOccurrences(of: "'", with: "")
+        s = s.replacingOccurrences(of: "’", with: "")
+        s = s.replacingOccurrences(of: "\"", with: "")
+        s = s.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+        return s.lowercased().trimmingCharacters(in: .whitespaces)
     }
 
     /// Brand-tail detection: "Byron Goode Jr - Root Insurance" → "Root Insurance",

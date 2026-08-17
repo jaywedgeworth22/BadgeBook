@@ -56,5 +56,7 @@ experience** wrapped around a confidence-scored matching engine:
 - **macOS**: power users, biggest address books, easiest review UX.
 - **iOS**: where the contacts actually live for most people; background
   `BGProcessingTask` does the fetch work overnight, notification → review.
-- **Web (vCard)**: zero-install top-of-funnel; works for Android/Google
-  Contacts users too (export → process → import). Marketing surface + SEO.
+- **Web (vCard / Google CSV)**: zero-install top-of-funnel; works for
+  Android/Google Contacts users too (export → process → import). Crest's
+  catalog, phone match, and iconic marks run in the browser. Marketing
+  surface + SEO.

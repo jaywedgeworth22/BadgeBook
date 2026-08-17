@@ -25,19 +25,23 @@ struct CLI {
         return dir
     }
 
-    static func makePipeline() -> MatchPipeline? {
-        guard let clientID = env("BADGEBOOK_BRANDFETCH_CLIENT_ID") else {
-            FileHandle.standardError.write("error: set BADGEBOOK_BRANDFETCH_CLIENT_ID\n".data(using: .utf8)!)
-            return nil
+    static func makePipeline() -> MatchPipeline {
+        var sources: [any LogoSource] = [
+            PreferredMarksSource(),
+            SimpleIconsSource(),
+            WikimediaSource(),
+            FaviconSource()
+        ]
+        if let clientID = env("BADGEBOOK_BRANDFETCH_CLIENT_ID") {
+            sources.insert(BrandfetchSource(brandAPIKey: env("BADGEBOOK_BRANDFETCH_API_KEY"),
+                                            logoClientID: clientID), at: 1)
         }
-        let brandfetch = BrandfetchSource(brandAPIKey: env("BADGEBOOK_BRANDFETCH_API_KEY"),
-                                          logoClientID: clientID)
-        let wikimedia = WikimediaSource()
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 20
         config.timeoutIntervalForResource = 30
         let session = URLSession(configuration: config)
-        return MatchPipeline(sources: [brandfetch, wikimedia]) { url in
+        return MatchPipeline(sources: sources) { url in
+            if url.scheme == "data" { return Data(contentsOf: url) }
             let req = BrandfetchSource.cdnRequest(url: url)
             let (data, _) = try await session.data(for: req)
             return data
@@ -118,7 +122,7 @@ struct BadgeBookCLI {
     // MARK: - match
 
     static func match(args: [String]) async throws {
-        guard let pipeline = CLI.makePipeline() else { Foundation.exit(1) }
+        let pipeline = CLI.makePipeline()
         let limit: Int? = args.first == "--limit" ? Int(args.dropFirst().first ?? "") : nil
 
         let provider = CNContactsProvider()

@@ -1,23 +1,26 @@
 # BadgeBook Web
 
-Zero-install top-of-funnel: upload a `.vcf` → match in the browser → download
-the updated vCard with logos embedded (`PHOTO;ENCODING=b;TYPE=PNG:…`).
+Zero-install top-of-funnel: upload a `.vcf` or Google CSV → review matches in
+three buckets (Ready / Review / Not-found) → download an updated vCard with
+logos embedded. Contacts stay in the browser.
 
-## Why vCard
+## What moved here from Crest
 
-Contacts APIs are platform-locked; every contacts app (iCloud, Google,
-Outlook, Android) imports/exports vCard. The web app therefore serves users
-the native apps can't reach — and doubles as the marketing surface.
+- vCard parse/export and Google CSV import
+- Offline company catalog and published-phone directory
+- Simple Icons + curated marks + favicon fallbacks
+- Backup-before-download
+- People who work at a company stay people; a lone firm name becomes a company card
 
-## Proposed stack
+The review-first contract is BadgeBook's: high-confidence only is pre-checked;
+guessed `{name}.com` domains and favicon-only hits never auto-apply.
 
-- **Next.js + Vercel** — landing page, upload/review/download flow
-- **TypeScript port of the matching rules** — `docs/MATCHING-ENGINE.md` is the
-  source of truth; the TS and Swift implementations share the golden corpus
-- **Stripe** — Pro tier (unlimited contacts; free tier capped at 25)
-- **Privacy** — vCards processed in memory, never persisted (privacy page is a
-  feature, not boilerplate)
+## Run
 
-## Milestones
+```bash
+npm install
+npm test
+npm run dev
+```
 
-See Phase 3 in `docs/ROADMAP.md`.
+Production build: `npm run build`.

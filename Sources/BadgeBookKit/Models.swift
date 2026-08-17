@@ -10,12 +10,14 @@ public struct ContactIdentity: Sendable, Hashable {
     public var organization: String?
     public var emailDomains: [String]
     public var websiteHosts: [String]
+    /// Raw phone strings (Crest: match published customer-service numbers).
+    public var phoneNumbers: [String]
     public var hasImage: Bool
 
     public init(id: String, displayName: String, givenName: String? = nil,
                 familyName: String? = nil, organization: String? = nil,
                 emailDomains: [String] = [], websiteHosts: [String] = [],
-                hasImage: Bool = false) {
+                phoneNumbers: [String] = [], hasImage: Bool = false) {
         self.id = id
         self.displayName = displayName
         self.givenName = givenName
@@ -23,6 +25,7 @@ public struct ContactIdentity: Sendable, Hashable {
         self.organization = organization
         self.emailDomains = emailDomains
         self.websiteHosts = websiteHosts
+        self.phoneNumbers = phoneNumbers
         self.hasImage = hasImage
     }
 }
@@ -37,7 +40,8 @@ public enum ContactClass: Sendable {
 }
 
 public enum SourceKind: String, Sendable {
-    case brandfetch, wikimedia, googleCSE, googleScrape, manual
+    case brandfetch, wikimedia, googleCSE, googleScrape
+    case simpleIcons, favicon, preferred, companiesLogo, manual
 }
 
 /// One logo option for a contact. The pipeline keeps the top N, not just the winner.
@@ -50,6 +54,8 @@ public struct LogoCandidate: Sendable, Hashable {
     /// Brandfetch asset type: "icon" (pictographic) beats "logo" (wordmark).
     public var assetType: String?
     public var altText: String?
+    /// Crest: transparent iconic marks score higher than opaque wordmarks.
+    public var hasAlpha: Bool?
 
     public var aspectRatio: Double? {
         guard let w = pixelWidth, let h = pixelHeight, h > 0 else { return nil }
@@ -66,7 +72,8 @@ public struct LogoCandidate: Sendable, Hashable {
 
     public init(source: SourceKind, imageURL: URL, pageURL: URL? = nil,
                 pixelWidth: Int? = nil, pixelHeight: Int? = nil,
-                assetType: String? = nil, altText: String? = nil) {
+                assetType: String? = nil, altText: String? = nil,
+                hasAlpha: Bool? = nil) {
         self.source = source
         self.imageURL = imageURL
         self.pageURL = pageURL
@@ -74,6 +81,7 @@ public struct LogoCandidate: Sendable, Hashable {
         self.pixelHeight = pixelHeight
         self.assetType = assetType
         self.altText = altText
+        self.hasAlpha = hasAlpha
     }
 }
 
