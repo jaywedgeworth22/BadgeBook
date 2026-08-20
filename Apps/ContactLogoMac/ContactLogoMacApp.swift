@@ -1,9 +1,9 @@
 import SwiftUI
-import BadgeBookKit
+import ContactLogoKit
 
-/// BadgeBook for macOS — review-first logo matching for your address book.
+/// ContactLogo for macOS — review-first logo matching for your address book.
 @main
-struct BadgeBookMacApp: App {
+struct ContactLogoMacApp: App {
     @StateObject private var model = ReviewSession()
 
     var body: some Scene {

@@ -3,7 +3,7 @@ import Foundation
 /// MATCHING-ENGINE §2: turn a raw display name into a search-safe brand query.
 public enum NameNormalizer {
 
-    /// Legal suffixes Crest strips before catalog lookup ("Apple Inc" → "Apple").
+    /// Legal suffixes stripped before catalog lookup ("Apple Inc" → "Apple").
     static let legalSuffix = try! NSRegularExpression(
         pattern: #"\s*,?\s*(inc\.?|incorporated|llc|l\.l\.c\.?|ltd\.?|limited|corp\.?|corporation|co\.?|company|gmbh|ag|plc|holdings|group|llc\.|p\.c\.|llp)\s*$"#,
         options: .caseInsensitive
@@ -12,7 +12,7 @@ public enum NameNormalizer {
     /// "Walgreens (Mason Rd / Cypress)" → "Walgreens"
     public static func clean(_ raw: String) -> String {
         var s = raw
-        // Crest + BadgeBook: drop store locations in (), [], {}
+        // Drop store locations in (), [], {}
         s = s.replacingOccurrences(of: #"\s*[\(\[\{][^)\]\}]*[\)\]\}]"#, with: " ", options: .regularExpression)
         s = s.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
         s = s.trimmingCharacters(in: CharacterSet(charactersIn: " -–—,"))

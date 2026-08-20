@@ -12,7 +12,7 @@ public struct MatchPipeline: Sendable {
         self.fetchImage = fetchImage
     }
 
-    /// BadgeBook review-first classes, plus Crest's "lone first/last that is a firm".
+    /// Review-first classes, plus lone first/last that is a firm (vendor/crest).
     public func classify(_ c: ContactIdentity) -> ContactClass {
         let orgOrName = c.organization?.isEmpty == false ? c.organization! : c.displayName
         let cleaned = NameNormalizer.clean(orgOrName)
@@ -22,7 +22,7 @@ public struct MatchPipeline: Sendable {
         let family = (c.familyName ?? "").trimmingCharacters(in: .whitespaces)
         let hasPersonName = !given.isEmpty || !family.isEmpty
         if hasPersonName {
-            // Crest: a lone given or family name that is a known firm (and has
+            // A lone given or family name that is a known firm (and has
             // no personal email) is the company, not a person.
             if inferCompanyFromLoneName(c) != nil { return .businessCard }
             return .person
@@ -30,7 +30,7 @@ public struct MatchPipeline: Sendable {
         return .businessCard
     }
 
-    /// Crest `inferCompanyOrganization`: lone first/last that is a catalog firm.
+    /// Lone first/last that is a catalog firm.
     public func inferCompanyFromLoneName(_ c: ContactIdentity) -> String? {
         let given = NameNormalizer.clean(c.givenName ?? "")
         let family = NameNormalizer.clean(c.familyName ?? "")
@@ -102,18 +102,18 @@ public struct MatchPipeline: Sendable {
                                               nameSimilarityPassed: similarityOK,
                                               homonymRisk: flags.contains("homonym-risk"),
                                               domainAgrees: domainAgrees)
-        // Contact-owned website/email, or Crest catalog/phone: a square asset
+        // Contact-owned website/email, or catalog/phone: a square asset
         // for that domain earns HIGH even without icon typing.
         if domainAgrees, best?.isSquareish == true, conf == .medium {
             conf = .high
             flags.append("domain-match")
         }
-        // Crest `{name}.com` guess must never auto-apply.
+        // `{name}.com` guess must never auto-apply.
         if identity?.via == .guess {
             conf = min(conf, .medium)
             flags.append("guessed-domain")
         }
-        // Favicon-only hits stay in Review (Crest used them as last resort).
+        // Favicon-only hits stay in Review (last-resort marks).
         if best?.source == .favicon {
             conf = min(conf, .medium)
             flags.append("favicon-fallback")

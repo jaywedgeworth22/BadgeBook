@@ -1,6 +1,6 @@
 import Foundation
 
-/// Curated square/round iconic marks — Crest used these when generic sources
+/// Curated square/round iconic marks — used when generic sources
 /// returned a wordmark (Delta's triangle, not "DELTA" lettering).
 public struct PreferredMarksSource: LogoSource, Sendable {
     public let kind = SourceKind.preferred

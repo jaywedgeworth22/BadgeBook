@@ -1,7 +1,7 @@
 import Foundation
 
 /// Published customer-service numbers → official domain.
-/// Ported from Crest (`vendor/crest/src/lib/phones.ts`).
+/// Ported from `vendor/crest/src/lib/phones.ts`.
 public enum PhoneDirectory {
 
     static let domains: [String: String] = [

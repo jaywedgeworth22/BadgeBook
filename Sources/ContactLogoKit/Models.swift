@@ -10,7 +10,7 @@ public struct ContactIdentity: Sendable, Hashable {
     public var organization: String?
     public var emailDomains: [String]
     public var websiteHosts: [String]
-    /// Raw phone strings (Crest: match published customer-service numbers).
+    /// Raw phone strings (published customer-service numbers from vendor/crest).
     public var phoneNumbers: [String]
     public var hasImage: Bool
 
@@ -54,7 +54,7 @@ public struct LogoCandidate: Sendable, Hashable {
     /// Brandfetch asset type: "icon" (pictographic) beats "logo" (wordmark).
     public var assetType: String?
     public var altText: String?
-    /// Crest: transparent iconic marks score higher than opaque wordmarks.
+    /// Transparent iconic marks score higher than opaque wordmarks.
     public var hasAlpha: Bool?
 
     public var aspectRatio: Double? {

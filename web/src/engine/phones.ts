@@ -1,4 +1,4 @@
-/** Published customer-service numbers → domain. From Crest `phones.ts`. */
+/** Published customer-service numbers → domain. From `vendor/crest/src/lib/phones.ts`. */
 
 const PHONE_DOMAINS: Record<string, string> = {
   "8002211212": "delta.com",

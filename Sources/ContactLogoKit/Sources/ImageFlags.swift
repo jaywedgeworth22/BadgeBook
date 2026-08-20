@@ -1,6 +1,6 @@
 import Foundation
 
-/// Crest `image-flags.ts`: detect transparency without rendering, and score
+/// vendor/crest image-flags: detect transparency without rendering, and score
 /// iconic marks above opaque JPEG wordmarks.
 public enum ImageFlags {
 

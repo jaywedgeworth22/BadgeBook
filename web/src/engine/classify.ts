@@ -111,7 +111,7 @@ function looksLikePersonName(name: string): boolean {
   return parts.every((p) => /^[A-Za-z][A-Za-z'.-]{1,30}$/.test(p));
 }
 
-/** Crest: lone first/last that is a known firm, with no personal email. */
+/** Lone first/last that is a known firm, with no personal email. */
 export function inferCompanyFromLoneName(c: BookContact): string | undefined {
   if (isFreemail(c.email)) return undefined;
   const given = cleanName(c.givenName ?? "");

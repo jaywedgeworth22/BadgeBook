@@ -1,6 +1,6 @@
 import Foundation
 
-/// How a brand domain was obtained. Ported from Crest identity (`via`) and
+/// How a brand domain was obtained. Ported from vendor/crest identity (`via`) and
 /// kept as review-UI context — guessed domains never auto-apply.
 public enum IdentityVia: String, Sendable {
     case website, email, catalog, phone, guess
@@ -17,7 +17,7 @@ public struct ResolvedIdentity: Sendable, Equatable {
 }
 
 /// Fast local resolve: website → work email → company catalog → phone.
-/// Crest's last-resort `{name}.com` guess is preserved but flagged so the
+/// Last-resort `{name}.com` guess is preserved but flagged so the
 /// pipeline caps it at MEDIUM (review-first).
 public enum IdentityResolver {
 
@@ -44,7 +44,7 @@ public enum IdentityResolver {
         return nil
     }
 
-    /// Crest `guessDomain`: only when the cleaned key looks like a brand slug.
+    /// Guessed domain: only when the cleaned key looks like a brand slug.
     /// Never treated as HIGH confidence by the pipeline.
     public static func guessDomain(_ name: String) -> String? {
         if let known = CompanyCatalog.domain(forName: name) { return known }

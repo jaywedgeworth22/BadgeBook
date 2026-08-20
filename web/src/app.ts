@@ -75,7 +75,7 @@ function downloadBackup() {
 }
 
 function downloadUpdated() {
-  downloadText("badgebook-contacts.vcf", contactsToVcard(applySelected()), "text/vcard;charset=utf-8");
+  downloadText("contactlogo-contacts.vcf", contactsToVcard(applySelected()), "text/vcard;charset=utf-8");
 }
 
 function setAllHigh(selected: boolean) {
@@ -173,7 +173,7 @@ export function render() {
     el(
       "header",
       { class: "hero" },
-      el("h1", {}, "BadgeBook"),
+      el("h1", {}, "ContactLogo"),
       el(
         "p",
         {},
@@ -238,7 +238,7 @@ export function render() {
     el(
       "p",
       { class: "footer" },
-      "Review-first: high-confidence matches are pre-checked; guessed domains and favicons stay in review. Crest's company catalog, phone directory, and iconic-mark sources power the suggestions. Native macOS and iOS apps use the same rules in BadgeBookKit.",
+      "Review-first: high-confidence matches are pre-checked; guessed domains and favicons stay in review. The company catalog, phone directory, and iconic-mark sources power the suggestions. Native macOS and iOS apps use the same rules in ContactLogoKit.",
     ),
   );
   root.append(app);

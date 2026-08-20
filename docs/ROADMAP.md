@@ -2,8 +2,9 @@
 
 ## Phase 0 — Foundation (this scaffold)
 - [x] Product vision, architecture, matching-engine rulebook
-- [x] `BadgeBookKit` package skeleton (models, normalize, rank, sources)
-- [x] Crest merge: catalog, phone directory, iconic sources, web review app
+- [x] `ContactLogoKit` package (models, normalize, rank, sources)
+- [x] Catalog, phone directory, iconic sources, web review app
+- [x] Single product name: ContactLogo
 - [ ] Golden test corpus from the 189-name battle-test set
 - [ ] GitHub repo wiring, CI
 

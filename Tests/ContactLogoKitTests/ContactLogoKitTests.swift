@@ -1,5 +1,5 @@
 import XCTest
-@testable import BadgeBookKit
+@testable import ContactLogoKit
 
 final class NameNormalizerTests: XCTestCase {
     func testStripsParentheticals() {
@@ -175,7 +175,7 @@ final class ImageFlagsTests: XCTestCase {
     }
 }
 
-final class RankerCrestSourcesTests: XCTestCase {
+final class RankerIconicSourcesTests: XCTestCase {
     func testPreferredBeatsFavicon() {
         let fav = LogoCandidate(source: .favicon, imageURL: URL(string: "https://x/f.ico")!,
                                 pixelWidth: 128, pixelHeight: 128, assetType: "icon")
