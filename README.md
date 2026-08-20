@@ -1,43 +1,50 @@
-# BadgeBook
+# ContactLogo
 
-**Brand icons for your address book.** BadgeBook scans your contacts, finds the
-companies behind them, and puts a clean, recognizable logo on every business
-card — so "Walgreens" shows the red W, not a grey monogram.
+**Brand icons for your address book.** ContactLogo scans your contacts, finds
+the companies behind them, and puts a clean, recognizable logo on every
+business card — so "Walgreens" shows the red W, not a grey monogram.
 
-Three products, one engine:
+**Site:** [contactlogo.grok.me](https://contactlogo.grok.me)
+
+Three shells, one engine:
 
 | Product | What it is |
 | --- | --- |
-| **BadgeBook for macOS** | Native app. Full contact scan, review queue, one-click apply, undo. |
-| **BadgeBook for iOS** | Native app. Same engine on-device, background processing with notification when your review queue is ready. |
-| **BadgeBook Web** | Upload a `.vcf` export → review matches in the browser → download the updated vCard. No install, works for anyone. |
+| **ContactLogo for macOS** | Native app. Full contact scan, review queue, one-click apply, undo. |
+| **ContactLogo for iOS** | Native app. Same engine on-device, background processing with notification when your review queue is ready. |
+| **ContactLogo Web** | Upload a `.vcf` or Google CSV → review matches in the browser → download the updated vCard. No install. |
+
+This repo used to ship two names (BadgeBook and Crest). They are the same job.
+ContactLogo is the only product. Catalog, phone, and iconic-mark matching from
+the imported tree at `vendor/crest` live in `ContactLogoKit` and the web
+engine. See [docs/CONTACTLOGO.md](docs/CONTACTLOGO.md).
 
 ## Why it exists
 
 - Your address book is full of businesses: pharmacies, banks, airlines, apps.
   They all render as identical grey initials.
 - Automatic logo matching is easy to get *almost* right — and embarrassing when
-  wrong (a tire brand became a different tire brand after a merger; a bank
-  became a root beer). BadgeBook is built around a **review-first** flow with
-  confidence tiers and per-contact overrides, not blind automation.
+  wrong. ContactLogo is built around a **review-first** flow with confidence
+  tiers and per-contact overrides, not blind automation.
 
 ## Status
 
-Early scaffold. The matching engine is distilled from a real-world battle test
-against a 14,000-contact address book — see
-[docs/MATCHING-ENGINE.md](docs/MATCHING-ENGINE.md) for the rule set and the
-failure catalog it was built from.
+Matching engine plus working web review app. The rule set was distilled from a
+real-world battle test against a 14,000-contact address book — see
+[docs/MATCHING-ENGINE.md](docs/MATCHING-ENGINE.md).
 
 ## Repository layout
 
 ```
-Sources/BadgeBookKit/     Shared matching engine (Swift, macOS + iOS)
-Apps/BadgeBookMac/        macOS SwiftUI app
-Apps/BadgeBookiOS/        iOS SwiftUI app
-web/                      Web app (vCard flow)
-docs/                     Vision, architecture, matching rules, roadmap
+Sources/ContactLogoKit/   Shared matching engine (Swift, macOS + iOS)
+Sources/contactlogo/      CLI dogfood driver
+Apps/ContactLogoMac/      macOS SwiftUI app
+Apps/ContactLogoiOS/      iOS SwiftUI app
+web/                      Web app (vCard / CSV → review → download)
+vendor/crest/             Historical imported git tree (not a second product)
+docs/                     Vision, architecture, matching rules, product history
 ```
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE).
+Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
