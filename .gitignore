@@ -20,3 +20,6 @@ web/dist/
 .env
 .env.*
 secrets.json
+
+# CLI work dirs
+.contactlogo/

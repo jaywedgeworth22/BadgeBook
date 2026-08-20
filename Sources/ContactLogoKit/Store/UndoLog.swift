@@ -10,7 +10,7 @@ public struct UndoLog: Sendable {
             self.directory = directory
         } else {
             let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            self.directory = base.appendingPathComponent("BadgeBook/Undo", isDirectory: true)
+            self.directory = base.appendingPathComponent("ContactLogo/Undo", isDirectory: true)
         }
     }
 

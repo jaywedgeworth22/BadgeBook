@@ -1,4 +1,4 @@
-/** Offline name → domain table ported from Crest (`vendor/crest/src/lib/contacts.ts`). */
+/** Offline name → domain table ported from `vendor/crest/src/lib/contacts.ts`. */
 
 import { companyKey } from "./normalize.ts";
 

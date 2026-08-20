@@ -1,6 +1,6 @@
 import Foundation
 
-/// DuckDuckGo + Google favicon fallbacks from Crest. Last-resort marks —
+/// DuckDuckGo + Google favicon fallbacks from vendor/crest. Last-resort marks —
 /// ranking keeps them below iconic sources so they land in Review, not Auto.
 public struct FaviconSource: LogoSource, Sendable {
     public let kind = SourceKind.favicon

@@ -1,8 +1,8 @@
 import SwiftUI
-import BadgeBookKit
+import ContactLogoKit
 
 /// Three-bucket review layout (VISION: Auto / Review / Not-found).
-/// Crest's approve / try-another / upload / skip actions live on each row.
+/// Approve / try-another / upload / skip actions live on each row.
 struct ContentView: View {
     @EnvironmentObject var model: ReviewSession
 
@@ -16,14 +16,14 @@ struct ContentView: View {
                 Label("Not found (\(model.notFound.count))", systemImage: "minus.circle")
                     .tag(ReviewSession.Bucket.notFound)
             }
-            .navigationTitle("BadgeBook")
+            .navigationTitle("ContactLogo")
         } detail: {
             VStack(alignment: .leading, spacing: 16) {
                 switch model.stage {
                 case .idle:
                     ContentUnavailableView("Scan your contacts",
                                            systemImage: "person.crop.square.filled.and.at.rectangle",
-                                           description: Text("BadgeBook finds brand logos for the businesses in your address book — you approve every change."))
+                                           description: Text("ContactLogo finds brand logos for the businesses in your address book — you approve every change."))
                     Button("Scan contacts") { Task { await model.scanAndMatch() } }
                         .buttonStyle(.borderedProminent)
                 case .scanning:

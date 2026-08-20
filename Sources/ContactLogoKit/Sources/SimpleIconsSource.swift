@@ -1,6 +1,6 @@
 import Foundation
 
-/// Simple Icons CDN — Crest's preferred transparent mark after curated icons.
+/// Simple Icons CDN — preferred transparent mark after curated icons.
 /// Slug map ported from `vendor/crest/src/routes/api/logo.ts`.
 public struct SimpleIconsSource: LogoSource, Sendable {
     public let kind = SourceKind.simpleIcons

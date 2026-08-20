@@ -1,30 +1,31 @@
-# BadgeBook
+# ContactLogo
 
-**Brand icons for your address book.** BadgeBook scans your contacts, finds the
-companies behind them, and puts a clean, recognizable logo on every business
-card — so "Walgreens" shows the red W, not a grey monogram.
+**Brand icons for your address book.** ContactLogo scans your contacts, finds
+the companies behind them, and puts a clean, recognizable logo on every
+business card — so "Walgreens" shows the red W, not a grey monogram.
 
-Three products, one engine:
+**Site:** [contactlogo.grok.me](https://contactlogo.grok.me)
+
+Three shells, one engine:
 
 | Product | What it is |
 | --- | --- |
-| **BadgeBook for macOS** | Native app. Full contact scan, review queue, one-click apply, undo. |
-| **BadgeBook for iOS** | Native app. Same engine on-device, background processing with notification when your review queue is ready. |
-| **BadgeBook Web** | Upload a `.vcf` or Google CSV → review matches in the browser → download the updated vCard. No install. |
+| **ContactLogo for macOS** | Native app. Full contact scan, review queue, one-click apply, undo. |
+| **ContactLogo for iOS** | Native app. Same engine on-device, background processing with notification when your review queue is ready. |
+| **ContactLogo Web** | Upload a `.vcf` or Google CSV → review matches in the browser → download the updated vCard. No install. |
 
-Crest (the earlier web app for this job) is merged in: its company catalog,
-phone directory, and iconic-mark sources now live in `BadgeBookKit` and the
-web engine. Crest's git history is kept at `vendor/crest`. See
-[docs/CREST-MERGE.md](docs/CREST-MERGE.md).
+This repo used to ship two names (BadgeBook and Crest). They are the same job.
+ContactLogo is the only product. Catalog, phone, and iconic-mark matching from
+the imported tree at `vendor/crest` live in `ContactLogoKit` and the web
+engine. See [docs/CONTACTLOGO.md](docs/CONTACTLOGO.md).
 
 ## Why it exists
 
 - Your address book is full of businesses: pharmacies, banks, airlines, apps.
   They all render as identical grey initials.
 - Automatic logo matching is easy to get *almost* right — and embarrassing when
-  wrong (a tire brand became a different tire brand after a merger; a bank
-  became a root beer). BadgeBook is built around a **review-first** flow with
-  confidence tiers and per-contact overrides, not blind automation.
+  wrong. ContactLogo is built around a **review-first** flow with confidence
+  tiers and per-contact overrides, not blind automation.
 
 ## Status
 
@@ -35,13 +36,13 @@ real-world battle test against a 14,000-contact address book — see
 ## Repository layout
 
 ```
-Sources/BadgeBookKit/     Shared matching engine (Swift, macOS + iOS)
-Sources/badgebook/        CLI dogfood driver
-Apps/BadgeBookMac/        macOS SwiftUI app
-Apps/BadgeBookiOS/        iOS SwiftUI app
+Sources/ContactLogoKit/   Shared matching engine (Swift, macOS + iOS)
+Sources/contactlogo/      CLI dogfood driver
+Apps/ContactLogoMac/      macOS SwiftUI app
+Apps/ContactLogoiOS/      iOS SwiftUI app
 web/                      Web app (vCard / CSV → review → download)
-vendor/crest/             Crest source + git history (not a second product)
-docs/                     Vision, architecture, matching rules, Crest merge
+vendor/crest/             Historical imported git tree (not a second product)
+docs/                     Vision, architecture, matching rules, product history
 ```
 
 ## License

@@ -7,7 +7,7 @@ public struct WikimediaSource: LogoSource, Sendable {
     private let session: URLSession
     private let userAgent: String
 
-    public init(userAgent: String = "BadgeBook/1.0 (contact: support@badgebook.app)",
+    public init(userAgent: String = "ContactLogo/1.0 (https://contactlogo.grok.me)",
                 session: URLSession = .shared) {
         self.userAgent = userAgent
         self.session = session

@@ -1,4 +1,4 @@
-/** BadgeBook MATCHING-ENGINE §2 + Crest legal-suffix / bracket stripping. */
+/** MATCHING-ENGINE §2 plus legal-suffix / bracket stripping. */
 
 const LEGAL_STRIP =
   /\s*,?\s*(inc\.?|incorporated|llc|l\.l\.c\.?|ltd\.?|limited|corp\.?|corporation|co\.?|company|gmbh|ag|plc|holdings|group|llc\.|p\.c\.|llp)\s*$/i;

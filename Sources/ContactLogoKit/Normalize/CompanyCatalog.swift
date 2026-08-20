@@ -1,6 +1,6 @@
 import Foundation
 
-/// Offline name → domain table ported from Crest (`vendor/crest/src/lib/contacts.ts`).
+/// Offline name → domain table ported from `vendor/crest/src/lib/contacts.ts`.
 /// Used when a contact has no usable website or work email. Homonyms still
 /// go through the review-first confidence cap (MATCHING-ENGINE §4).
 public enum CompanyCatalog {

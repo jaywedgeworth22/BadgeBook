@@ -1,6 +1,6 @@
 import Foundation
 
-/// CompaniesLogo slug picker from Crest (`vendor/crest/src/lib/companieslogo.ts`).
+/// CompaniesLogo slug picker from `vendor/crest/src/lib/companieslogo.ts`.
 /// Network fetch of the sitemap stays optional — the picker is deterministic
 /// and unit-tested against a fixture catalog.
 public struct CompaniesLogoSource: LogoSource, Sendable {

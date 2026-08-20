@@ -28,7 +28,7 @@ Notes:
 4. Keep an alias map: "TxT" → "Texas by Texas", "GCX" → "Raise", "NTB" ≠
    "Mavis" (see §4).
 
-## 2b. Identity (from Crest)
+## 2b. Identity
 
 Resolve a domain before any logo fetch, in this order:
 
@@ -44,7 +44,7 @@ is a business card, not a person. People who *work at* a company stay people.
 
 ## 3. Sources, in priority order
 
-1. **Preferred marks** — hand-reviewed iconic SVGs (Crest: Delta triangle).
+1. **Preferred marks** — hand-reviewed iconic SVGs (Delta triangle).
 2. **Simple Icons** — transparent brand glyphs by domain slug.
 3. **CompaniesLogo** slug picker (optional network fetch).
 4. **Brandfetch Brand API** (search by name → domain) + **Logo Link CDN**

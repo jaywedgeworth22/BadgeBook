@@ -1,17 +1,17 @@
 import Foundation
-import BadgeBookKit
+import ContactLogoKit
 
-/// BadgeBook CLI — Phase 1 dogfood driver (ROADMAP §Phase 1).
+/// ContactLogo CLI — Phase 1 dogfood driver (ROADMAP §Phase 1).
 ///
-///   badgebook scan                       classify contacts, print counts
-///   badgebook match [--limit N]          run the engine, write match-results.json + candidates/
-///   badgebook review                     export review.html from match-results.json
-///   badgebook apply <ids...|--high>      apply approved images (undo log written first)
-///   badgebook undo <batchID>             restore a previous batch
+///   contactlogo scan                       classify contacts, print counts
+///   contactlogo match [--limit N]          run the engine, write match-results.json + candidates/
+///   contactlogo review                     export review.html from match-results.json
+///   contactlogo apply <ids...|--high>      apply approved images (undo log written first)
+///   contactlogo undo <batchID>             restore a previous batch
 ///
 /// Brandfetch keys come from the environment:
-///   BADGEBOOK_BRANDFETCH_CLIENT_ID  (Logo Link CDN, required)
-///   BADGEBOOK_BRANDFETCH_API_KEY    (Brand API search, optional)
+///   CONTACTLOGO_BRANDFETCH_CLIENT_ID  (Logo Link CDN, required)
+///   CONTACTLOGO_BRANDFETCH_API_KEY    (Brand API search, optional)
 
 struct CLI {
     static func env(_ key: String) -> String? {
@@ -20,7 +20,7 @@ struct CLI {
 
     static func workDir() -> URL {
         let dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-            .appendingPathComponent(".badgebook", isDirectory: true)
+            .appendingPathComponent(".contactlogo", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }
@@ -32,8 +32,8 @@ struct CLI {
             WikimediaSource(),
             FaviconSource()
         ]
-        if let clientID = env("BADGEBOOK_BRANDFETCH_CLIENT_ID") {
-            sources.insert(BrandfetchSource(brandAPIKey: env("BADGEBOOK_BRANDFETCH_API_KEY"),
+        if let clientID = env("CONTACTLOGO_BRANDFETCH_CLIENT_ID") {
+            sources.insert(BrandfetchSource(brandAPIKey: env("CONTACTLOGO_BRANDFETCH_API_KEY"),
                                             logoClientID: clientID), at: 1)
         }
         let config = URLSessionConfiguration.default
@@ -59,7 +59,7 @@ struct StoredResult: Codable {
 }
 
 @main
-struct BadgeBookCLI {
+struct ContactLogoCLI {
     static func main() async {
         setvbuf(stdout, nil, _IONBF, 0) // unbuffered: progress must survive pipes
         var args = Array(CommandLine.arguments.dropFirst())
@@ -83,7 +83,7 @@ struct BadgeBookCLI {
 
     static func usage() {
         print("""
-        badgebook scan | match [--limit N] | review | apply <ids...|--high> | undo <batchID>
+        contactlogo scan | match [--limit N] | review | apply <ids...|--high> | undo <batchID>
         """)
     }
 
@@ -92,7 +92,7 @@ struct BadgeBookCLI {
     static func scan() async throws {
         let provider = CNContactsProvider()
         guard try await provider.requestAccess() else {
-            throw NSError(domain: "BadgeBook", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access denied"])
+            throw NSError(domain: "ContactLogo", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access denied"])
         }
         let contacts = try await provider.fetchCandidates()
         // classification needs no sources or keys
@@ -127,7 +127,7 @@ struct BadgeBookCLI {
 
         let provider = CNContactsProvider()
         guard try await provider.requestAccess() else {
-            throw NSError(domain: "BadgeBook", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access denied"])
+            throw NSError(domain: "ContactLogo", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access denied"])
         }
         let contacts = try await provider.fetchCandidates()
         let businessOnly = args.contains("--business-only")
@@ -197,7 +197,7 @@ struct BadgeBookCLI {
             """)
         }
         let html = """
-        <!DOCTYPE html><html><head><meta charset='utf-8'><title>BadgeBook review</title>
+        <!DOCTYPE html><html><head><meta charset='utf-8'><title>ContactLogo review</title>
         <style>
         body{font-family:-apple-system,sans-serif;background:#f5f5f7;margin:24px}
         .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
@@ -206,7 +206,7 @@ struct BadgeBookCLI {
         .thumb img{width:72px;height:72px;object-fit:contain;background:#fafafa;border-radius:8px}
         .noimg{width:72px;height:72px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:28px;background:#fafafa;border-radius:8px}
         .name{font-weight:600}.conf{font-size:12px;color:#666}.id{font-size:10px;color:#bbb;word-break:break-all}
-        </style></head><body><h1>BadgeBook review — \(results.count) matches</h1>
+        </style></head><body><h1>ContactLogo review — \(results.count) matches</h1>
         <div class='grid'>\(cards.joined())</div></body></html>
         """
         let out = dir.appendingPathComponent("review.html")
@@ -229,7 +229,7 @@ struct BadgeBookCLI {
         }
         let provider = CNContactsProvider()
         guard try await provider.requestAccess() else {
-            throw NSError(domain: "BadgeBook", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access denied"])
+            throw NSError(domain: "ContactLogo", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access denied"])
         }
         var entries: [ChangeSet.Entry] = []
         for r in wanted {
@@ -250,7 +250,7 @@ struct BadgeBookCLI {
         guard let batchID = args.first else { usage(); return }
         let provider = CNContactsProvider()
         guard try await provider.requestAccess() else {
-            throw NSError(domain: "BadgeBook", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access denied"])
+            throw NSError(domain: "ContactLogo", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access denied"])
         }
         try await UndoLog().restore(batchID: batchID, using: provider)
         print("restored batch \(batchID)")

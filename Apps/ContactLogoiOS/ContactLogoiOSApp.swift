@@ -1,12 +1,12 @@
 import SwiftUI
 import BackgroundTasks
-import BadgeBookKit
+import ContactLogoKit
 
-/// BadgeBook for iOS. Matching can run under BGProcessingTask; the review
+/// ContactLogo for iOS. Matching can run under BGProcessingTask; the review
 /// queue is the same three-bucket contract as macOS and the web app.
 @main
-struct BadgeBookiOSApp: App {
-    static let matchTaskIdentifier = "app.badgebook.match"
+struct ContactLogoiOSApp: App {
+    static let matchTaskIdentifier = "app.contactlogo.match"
     @StateObject private var model = ReviewSession()
 
     init() {
@@ -23,7 +23,7 @@ struct BadgeBookiOSApp: App {
         WindowGroup {
             NavigationStack {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("BadgeBook").font(.largeTitle.bold())
+                    Text("ContactLogo").font(.largeTitle.bold())
                     Text("Brand icons for your address book. Review every logo before it is written.")
                         .foregroundStyle(.secondary)
                     Label("Ready to apply (\(model.autoAccepted.count))", systemImage: "checkmark.circle.fill")
@@ -43,7 +43,7 @@ struct BadgeBookiOSApp: App {
 
 enum MatchBackgroundTask {
     static func schedule() {
-        let request = BGProcessingTaskRequest(identifier: BadgeBookiOSApp.matchTaskIdentifier)
+        let request = BGProcessingTaskRequest(identifier: ContactLogoiOSApp.matchTaskIdentifier)
         request.requiresNetworkConnectivity = true
         request.requiresExternalPower = false
         try? BGTaskScheduler.shared.submit(request)

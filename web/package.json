@@ -1,8 +1,9 @@
 {
-  "name": "badgebook-web",
+  "name": "contactlogo-web",
   "private": true,
   "license": "Apache-2.0",
-  "description": "BadgeBook Web — review-first logo matching for a vCard or Google CSV",
+  "description": "ContactLogo Web — review-first logo matching for a vCard or Google CSV",
+  "homepage": "https://contactlogo.grok.me",
   "type": "module",
   "scripts": {
     "dev": "vite",
