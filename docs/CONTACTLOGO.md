@@ -3,9 +3,19 @@
 ContactLogo is the one product: brand icons for the address book, review-first,
 on macOS, iOS, and the web. Live site: [contactlogo.grok.me](https://contactlogo.grok.me).
 
-This repository previously used two names for the same job. Those names are
-retired. The combine work stays: catalog, phones, and iconic marks from the
+This repository previously used two names for the same job (BadgeBook and
+Crest). Those names are retired. The GitHub remote is still
+`jaywedgeworth22/BadgeBook` — that slug is not the product name.
+
+The combine work stays: catalog, phones, and iconic marks from the
 imported tree at `vendor/crest` sit inside ContactLogo's review-first engine.
+
+## Live site
+
+[contactlogo.grok.me](https://contactlogo.grok.me) is the product URL. Grok
+hosts that hostname from a Grok **Publish**, not from this repository's
+Actions. A merge here does not republish the site. Until Grok is published
+again, the hosted page may still show the retired Crest name.
 
 ## What this product does
 
