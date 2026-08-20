@@ -1,10 +1,14 @@
-# Crest
+# Crest (historical import)
+
+> This directory is a `git subtree` of the retired Crest project. The live
+> product is **[ContactLogo](../../README.md)**. Do not run this tree as an
+> app. See [docs/CONTACTLOGO.md](../../docs/CONTACTLOGO.md).
 
 Company logos for the contacts that need them.
 
 Crest finds company cards in an address book, suggests a simple square or round mark, and only writes a photo after you approve it. Existing pictures are never replaced unless you tap **Replace**.
 
-**Live site:** [contactlogo.grok.me](https://contactlogo.grok.me)
+**Live site (ContactLogo):** [contactlogo.grok.me](https://contactlogo.grok.me)
 
 ## License
 
@@ -42,9 +46,9 @@ Optional: set `GOOGLE_CLIENT_ID` (or `VITE_GOOGLE_CONTACTS_CLIENT_ID`) so **Impo
 | Place | What updates it |
 | --- | --- |
 | This GitHub repo | Commits on `main` |
-| [contactlogo.grok.me](https://contactlogo.grok.me) | Grok **Publish** of the Crest project |
+| [contactlogo.grok.me](https://contactlogo.grok.me) | Grok **Publish** (still the Crest Grok project until republished) |
 
-Grok hosts the live `*.grok.me` site from the Crest project in Grok, not from a GitHub Action. After changes land here, publish again in Grok so the live site matches. Pull requests on GitHub do not deploy to grok.me by themselves.
+Grok hosts the live `*.grok.me` site from a Grok project, not from a GitHub Action. After ContactLogo changes land here, publish again in Grok so the live page says ContactLogo. Pull requests on GitHub do not deploy to grok.me by themselves.
 
 ## Source layout
 

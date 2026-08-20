@@ -14,10 +14,10 @@ Three shells, one engine:
 | **ContactLogo for iOS** | Native app. Same engine on-device, background processing with notification when your review queue is ready. |
 | **ContactLogo Web** | Upload a `.vcf` or Google CSV → review matches in the browser → download the updated vCard. No install. |
 
-This repo used to ship two names (BadgeBook and Crest). They are the same job.
 ContactLogo is the only product. Catalog, phone, and iconic-mark matching from
 the imported tree at `vendor/crest` live in `ContactLogoKit` and the web
-engine. See [docs/CONTACTLOGO.md](docs/CONTACTLOGO.md).
+engine. Retired names and the GitHub remote slug are in
+[docs/CONTACTLOGO.md](docs/CONTACTLOGO.md).
 
 ## Why it exists
 
