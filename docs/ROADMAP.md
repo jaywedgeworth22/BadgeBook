@@ -2,7 +2,9 @@
 
 ## Phase 0 — Foundation (this scaffold)
 - [x] Product vision, architecture, matching-engine rulebook
-- [x] `BadgeBookKit` package skeleton (models, normalize, rank, sources)
+- [x] `ContactLogoKit` package (models, normalize, rank, sources)
+- [x] Catalog, phone directory, iconic sources, web review app
+- [x] Single product name: ContactLogo
 - [ ] Golden test corpus from the 189-name battle-test set
 - [ ] GitHub repo wiring, CI
 
@@ -22,7 +24,7 @@
 - [ ] TestFlight via existing App Store Connect account
 
 ## Phase 3 — Web
-- [ ] vCard parse → match → review → download
+- [x] vCard / Google CSV parse → match → review → download
 - [ ] Free quota + Stripe Pro
 - [ ] Landing page, SEO ("add logos to contacts")
 

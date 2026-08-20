@@ -1,0 +1,125 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { lookupCompanyDomain } from "./catalog.ts";
+import { lookupPhoneDomain, isBusinessPhone } from "./phones.ts";
+import { brandTail, cleanName, companyKey, passesSimilarity } from "./normalize.ts";
+import {
+  classifyContact,
+  inferCompanyFromLoneName,
+  resolveIdentity,
+  type BookContact,
+} from "./classify.ts";
+import { matchContact } from "./match.ts";
+import { parseVcard, contactToVcard } from "./vcard.ts";
+import { looksLikeContactCsv, parseGoogleCsv } from "./csv.ts";
+import { simpleIconsSlug } from "./logos.ts";
+
+test("clean strips store locations and legal suffixes", () => {
+  assert.equal(cleanName("Walgreens (Mason Rd / Cypress)"), "Walgreens");
+  assert.equal(companyKey("Apple Inc"), "apple");
+  assert.equal(companyKey("The Home Depot"), "the home depot");
+});
+
+test("catalog finds brands and location tails", () => {
+  assert.equal(lookupCompanyDomain("Walgreens"), "walgreens.com");
+  assert.equal(lookupCompanyDomain("Walgreens Mason Rd"), "walgreens.com");
+  assert.equal(lookupCompanyDomain("H-E-B"), "heb.com");
+  assert.equal(lookupCompanyDomain("Maya Chen"), undefined);
+});
+
+test("phone directory", () => {
+  assert.equal(lookupPhoneDomain("1-800-221-1212"), "delta.com");
+  assert.equal(lookupPhoneDomain("(800) 463-3339"), "fedex.com");
+  assert.equal(isBusinessPhone("800-463-3339"), true);
+  assert.equal(isBusinessPhone("(713) 555-0142"), false);
+});
+
+test("brand tail and similarity", () => {
+  assert.equal(brandTail("Chris At NTB"), "NTB");
+  assert.equal(brandTail("Byron Goode Jr - Root Insurance"), "Root Insurance");
+  assert.equal(passesSimilarity("Cash App", "Cash App"), true);
+  assert.equal(passesSimilarity("Cash App", "Bread Zine"), false);
+});
+
+test("people stay people; lone firm name becomes a business card", () => {
+  const person: BookContact = {
+    id: "1",
+    displayName: "Maya Chen",
+    givenName: "Maya",
+    familyName: "Chen",
+    organization: "Apple",
+    email: "maya@hey.com",
+  };
+  assert.equal(classifyContact(person), "person");
+  assert.equal(inferCompanyFromLoneName(person), undefined);
+
+  const lone: BookContact = { id: "2", displayName: "Walgreens", givenName: "Walgreens" };
+  assert.equal(classifyContact(lone), "businessCard");
+  assert.equal(inferCompanyFromLoneName(lone), "Walgreens");
+
+  const generic: BookContact = { id: "3", displayName: "Hospital" };
+  assert.equal(classifyContact(generic), "nonBrand");
+});
+
+test("review-first: catalog icon is high; guess is never auto", () => {
+  const fedex = matchContact({ id: "1", displayName: "FedEx" });
+  assert.equal(fedex.via, "catalog");
+  assert.equal(fedex.confidence, "high");
+  assert.equal(fedex.selected, true);
+
+  const guess = matchContact({ id: "2", displayName: "Acme Widgets" });
+  assert.equal(guess.via, "guess");
+  assert.notEqual(guess.confidence, "high");
+  assert.equal(guess.selected, false);
+
+  const hospital = matchContact({ id: "3", displayName: "Hospital" });
+  assert.equal(hospital.confidence, "skip");
+});
+
+test("photo-protected people are skipped", () => {
+  const person: BookContact = {
+    id: "1",
+    displayName: "Maya Chen",
+    givenName: "Maya",
+    familyName: "Chen",
+    hadExistingPhoto: true,
+  };
+  assert.equal(matchContact(person).flags.includes("photo-protected"), true);
+});
+
+test("vcard round-trip keeps org and photo", () => {
+  const card = contactToVcard({
+    id: "1",
+    displayName: "FedEx",
+    organization: "FedEx",
+    email: "x@fedex.com",
+    photoDataUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  });
+  const parsed = parseVcard(card);
+  assert.equal(parsed.length, 1);
+  assert.equal(parsed[0]?.organization, "FedEx");
+  assert.equal(parsed[0]?.hadExistingPhoto, true);
+});
+
+test("google csv import", () => {
+  const csv = "Name,Given Name,Organization Name,E-mail 1 - Value\nFedEx,FedEx,FedEx,x@fedex.com\n";
+  assert.equal(looksLikeContactCsv(csv), true);
+  const rows = parseGoogleCsv(csv);
+  assert.equal(rows[0]?.displayName, "FedEx");
+  assert.equal(rows[0]?.email, "x@fedex.com");
+});
+
+test("simple icons slug map", () => {
+  assert.equal(simpleIconsSlug("chase.com"), "jpmorgan");
+  assert.equal(simpleIconsSlug("att.com"), "atandt");
+});
+
+test("identity prefers website then catalog then phone", () => {
+  const site = resolveIdentity({ id: "1", displayName: "Delta", website: "https://delta.com" }, "Delta");
+  assert.equal(site?.via, "website");
+  const catalog = resolveIdentity({ id: "2", displayName: "FedEx" }, "FedEx");
+  assert.equal(catalog?.via, "catalog");
+  const phone = resolveIdentity({ id: "3", displayName: "Help", phone: "800-463-3339" }, "Help");
+  assert.equal(phone?.via, "phone");
+  assert.equal(phone?.domain, "fedex.com");
+});

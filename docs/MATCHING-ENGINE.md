@@ -28,25 +28,44 @@ Notes:
 4. Keep an alias map: "TxT" → "Texas by Texas", "GCX" → "Raise", "NTB" ≠
    "Mavis" (see §4).
 
+## 2b. Identity
+
+Resolve a domain before any logo fetch, in this order:
+
+1. Contact website (http/https only).
+2. Work email domain (never freemail).
+3. **Company catalog** — offline name → official domain (`CompanyCatalog`).
+4. **Phone directory** — published customer-service numbers (`PhoneDirectory`).
+5. `{cleaned}.com` guess — last resort only; the pipeline flags `guessed-domain`
+   and caps confidence at MEDIUM so it never auto-applies.
+
+A lone given or family name that is a catalog firm (and has no personal email)
+is a business card, not a person. People who *work at* a company stay people.
+
 ## 3. Sources, in priority order
 
-1. **Brandfetch Brand API** (search by name → domain) + **Logo Link CDN**
+1. **Preferred marks** — hand-reviewed iconic SVGs (Delta triangle).
+2. **Simple Icons** — transparent brand glyphs by domain slug.
+3. **CompaniesLogo** slug picker (optional network fetch).
+4. **Brandfetch Brand API** (search by name → domain) + **Logo Link CDN**
    (domain → asset, free client ID). Prefer `type: icon` over `type: logo`
    (wordmark). Prefer `theme: light`. PNG only for Contacts.
    - Gotchas: free Brand API rate-limits fast (429 within ~250 calls); Logo
      Link CDN needs a real `Referer` header and a non-`example.com` value, and
      returns a *letter-tile fallback* for unknown brands — detect and treat as
      "not found", not success.
-2. **Wikimedia Commons API** — excellent for major corporate wordmarks
+5. **Wikimedia Commons API** — excellent for major corporate wordmarks
    ("File:Exxon logo.svg"). Rasterize SVG server-side; `upload.wikimedia.org`
    thumbnailing rejects bot-y UAs, send a descriptive one.
    - Search with `srsearch=intitle:<name> intitle:logo` — plain "<name> logo"
      matches photo *descriptions* ("Walmart Neighborhood Market"), not files.
    - Commons throttles rapid sequential API bursts; identical contacts may
      intermittently return zero candidates. Back off and retry.
-3. **Google Custom Search API** (`searchType=image`, user-provided key,
+6. **Google Custom Search API** (`searchType=image`, user-provided key,
    100 free/day) — the only ToS-safe Google path on iOS/web.
-4. **Google Images scraping** (macOS power-user mode only): real browser,
+7. **Favicon fallbacks** (DuckDuckGo / Google s2) — last resort; confidence
+   capped at MEDIUM (`favicon-fallback`).
+8. **Google Images scraping** (macOS power-user mode only): real browser,
    ≤1 query / ~12s, exponential backoff. IP gets reCAPTCHA-flagged after
    ~60 rapid queries; recovery needs a human checkbox. Aspect ratio of the
    served gstatic thumbnails is preserved → deterministic square detection
@@ -88,8 +107,10 @@ Notes:
 
 ## 6. Confidence tiers
 
-- **HIGH** (pre-checked): source = Brandfetch/Wikimedia, square, icon type,
-  name similarity pass, no trap flags.
+- **HIGH** (pre-checked): source = preferred / Simple Icons / Brandfetch /
+  Wikimedia, square, icon type, name similarity pass, no trap flags. Catalog
+  or contact-owned domain + square asset may also promote to HIGH.
+- Guessed `{name}.com` domains and favicon-only hits are **never HIGH**.
 - **MEDIUM** (review): non-square fallback, aggregator source, homonym risk,
   name-search-only match.
 - **LOW/SKIP**: generic blocklist, fallback tile, no candidates.

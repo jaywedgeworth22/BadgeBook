@@ -2,19 +2,19 @@
 import PackageDescription
 
 let package = Package(
-    name: "BadgeBook",
+    name: "ContactLogo",
     platforms: [.macOS(.v14), .iOS(.v17)],
     products: [
-        .library(name: "BadgeBookKit", targets: ["BadgeBookKit"]),
-        .executable(name: "badgebook", targets: ["badgebook"])
+        .library(name: "ContactLogoKit", targets: ["ContactLogoKit"]),
+        .executable(name: "contactlogo", targets: ["contactlogo"])
     ],
     targets: [
-        .target(name: "BadgeBookKit"),
+        .target(name: "ContactLogoKit"),
         .executableTarget(
-            name: "badgebook",
-            dependencies: ["BadgeBookKit"],
-            path: "Sources/badgebook"
+            name: "contactlogo",
+            dependencies: ["ContactLogoKit"],
+            path: "Sources/contactlogo"
         ),
-        .testTarget(name: "BadgeBookKitTests", dependencies: ["BadgeBookKit"])
+        .testTarget(name: "ContactLogoKitTests", dependencies: ["ContactLogoKit"])
     ]
 )

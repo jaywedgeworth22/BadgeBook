@@ -1,23 +1,20 @@
-# BadgeBook Web
+# ContactLogo Web
 
-Zero-install top-of-funnel: upload a `.vcf` → match in the browser → download
-the updated vCard with logos embedded (`PHOTO;ENCODING=b;TYPE=PNG:…`).
+Zero-install top-of-funnel: upload a `.vcf` or Google CSV → review matches in
+three buckets (Ready / Review / Not-found) → download an updated vCard with
+logos embedded. Contacts stay in the browser.
 
-## Why vCard
+Site: [contactlogo.grok.me](https://contactlogo.grok.me)
 
-Contacts APIs are platform-locked; every contacts app (iCloud, Google,
-Outlook, Android) imports/exports vCard. The web app therefore serves users
-the native apps can't reach — and doubles as the marketing surface.
+The review-first contract: high-confidence only is pre-checked; guessed
+`{name}.com` domains and favicon-only hits never auto-apply.
 
-## Proposed stack
+## Run
 
-- **Next.js + Vercel** — landing page, upload/review/download flow
-- **TypeScript port of the matching rules** — `docs/MATCHING-ENGINE.md` is the
-  source of truth; the TS and Swift implementations share the golden corpus
-- **Stripe** — Pro tier (unlimited contacts; free tier capped at 25)
-- **Privacy** — vCards processed in memory, never persisted (privacy page is a
-  feature, not boilerplate)
+```bash
+npm install
+npm test
+npm run dev
+```
 
-## Milestones
-
-See Phase 3 in `docs/ROADMAP.md`.
+Production build: `npm run build`.
