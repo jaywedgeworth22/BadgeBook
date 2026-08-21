@@ -18,6 +18,8 @@ struct CLI {
         ProcessInfo.processInfo.environment[key]
     }
 
+    /// Local-only work directory (gitignored). Holds AddressBook-derived
+    /// scan dumps; never commit `.contactlogo/` or `.badgebook/`.
     static func workDir() -> URL {
         let dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             .appendingPathComponent(".contactlogo", isDirectory: true)
@@ -113,7 +115,7 @@ struct ContactLogoCLI {
         print("candidates: \(contacts.count)")
         for (k, v) in counts.sorted(by: { $0.key < $1.key }) { print("  \(k): \(v)") }
         let dir = CLI.workDir()
-        let ids = classified.map { ["id": $0.0.id, "name": $0.0.displayName] }
+        let ids = classified.map { ["id": $0.0.id] }
         try JSONSerialization.data(withJSONObject: ids, options: .prettyPrinted)
             .write(to: dir.appendingPathComponent("scan.json"))
         print("wrote \(dir.appendingPathComponent("scan.json").path)")
@@ -149,7 +151,7 @@ struct ContactLogoCLI {
         var stored: [StoredResult] = []
         var done = 0
         for c in targets {
-            print("  → \(c.displayName)")
+            print("  → \(c.id)")
             let result = await pipeline.match(c)
             var file: String? = nil
             if let best = result.candidates.first {
