@@ -7,8 +7,9 @@ no CI / coordination plumbing — see Planned rows below.
 (none)
 
 ## Planned / Reserved
-- **2026-08-21 — KIMI — PLANNED — [P0] PRIVACY INCIDENT: purge .badgebook/ from git history.**  Board item 3b9ca6cf (fleet-infra).  `.badgebook/scan.json` (195KB) holds ~375 ABPerson-keyed entries with real full names from the owner's address book; `match-results.json` (51KB) more IDs+names; 298 candidate PNGs (~9.3MB) keyed by Apple AddressBook person UUIDs — third-party PII of people who never consented, in a PUBLIC repo's permanent history.  Purge with git filter-repo + force-push, add `.badgebook/` to .gitignore, decide on notification per owner judgment.
+- **2026-08-21 — DONE — [P0] PRIVACY INCIDENT: purged `.badgebook/` from git history.**  Board item 3b9ca6cf.  Removed scan dumps, match results, review HTML, and UUID-keyed candidate PNGs from all commits via `git filter-repo` + force-push.  `.gitignore` now covers `.badgebook/`, `.contactlogo/`, scan artifacts, and AddressBook exports.  Issue #4 closed.  Residual: GitHub may cache old blobs/PR diffs until GC; issue/PR text is path-only; no forks; clones and agent transcripts are out of band.
 - **2026-08-21 — KIMI — PLANNED — [P1] Onboard BadgeBook to the fleet + add CI.**  Board item 3b9ca6cf.  No .github/ at all (zero CI despite Tests/ and web/engine.test.ts), no AGENTS.md/CLAUDE.md/.claude, no dependabot, absent from fleet-apps.json and the digest.  Copy the DealDex coordination skeleton; add macOS runner job (swift test / xcodebuild test) + Node job for web/.  NOTE: vendor/crest is a subtree of the unarchived 'dead' crest repo — archive crest to stop drift/confusion.
 
 ## Changelog of this log
 - 2026-08-21 — KIMI — file created during owner-requested fleet setup audit.
+- 2026-08-21 — P0 history rewrite completed (filter-repo + force-push); no contact names in this log.
