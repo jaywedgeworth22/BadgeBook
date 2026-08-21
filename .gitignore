@@ -21,5 +21,18 @@ web/dist/
 .env.*
 secrets.json
 
-# CLI work dirs
+# Local contact-scan work dirs (AddressBook PII — never commit)
+.badgebook/
 .contactlogo/
+
+# Scan / match artifacts if they land outside the work dir
+scan.json
+match-results.json
+review.html
+
+# AddressBook / contacts exports
+*.vcf
+*.vcard
+*.abbu
+Contacts.csv
+google-contacts*.csv

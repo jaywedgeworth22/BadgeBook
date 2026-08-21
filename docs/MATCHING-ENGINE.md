@@ -22,7 +22,7 @@ Notes:
 
 1. Strip parentheticals: "Walgreens (Mason Rd / Cypress)" → "Walgreens".
 2. Strip role/location suffixes after ` - ` / ` — ` when the tail looks like a
-   role or place ("Byron Goode Jr - Root Insurance" is a trap: the *brand* is
+   role or place ("Firstname Lastname Jr - Root Insurance" is a trap: the *brand* is
    the tail here — see §5 rule 8).
 3. Collapse whitespace, trim ` -–—,`.
 4. Keep an alias map: "TxT" → "Texas by Texas", "GCX" → "Raise", "NTB" ≠

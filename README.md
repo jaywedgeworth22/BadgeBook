@@ -45,6 +45,10 @@ vendor/crest/             Historical imported git tree (not a second product)
 docs/                     Vision, architecture, matching rules, product history
 ```
 
+CLI scan dumps (`.contactlogo/`, `.badgebook/`, `scan.json`, `match-results.json`,
+`review.html`) are gitignored. They can contain AddressBook identifiers and
+must never be committed.
+
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
