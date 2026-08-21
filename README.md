@@ -5,6 +5,7 @@ the companies behind them, and puts a clean, recognizable logo on every
 business card — so "Walgreens" shows the red W, not a grey monogram.
 
 **Site:** [contactlogo.grok.me](https://contactlogo.grok.me)
+**Repo:** [jaywedgeworth22/ContactLogo](https://github.com/jaywedgeworth22/ContactLogo)
 
 Three shells, one engine:
 
@@ -14,10 +15,14 @@ Three shells, one engine:
 | **ContactLogo for iOS** | Native app. Same engine on-device, background processing with notification when your review queue is ready. |
 | **ContactLogo Web** | Upload a `.vcf` or Google CSV → review matches in the browser → download the updated vCard. No install. |
 
-ContactLogo is the only product. Catalog, phone, and iconic-mark matching from
-the imported tree at `vendor/crest` live in `ContactLogoKit` and the web
-engine. Retired names and the GitHub remote slug are in
-[docs/CONTACTLOGO.md](docs/CONTACTLOGO.md).
+ContactLogo is the only product. **BadgeBook** and **Crest** were working
+names and are retired. `jaywedgeworth22/BadgeBook` redirects here.
+`jaywedgeworth22/crest` is a legacy archive. The Grok previews at
+contactlogo.grok.me and bizlogo.grok.me are this same web product.
+
+Catalog, phone, and iconic-mark matching from the imported tree at
+`vendor/crest` live in `ContactLogoKit` and the web engine. Product history
+is in [docs/CONTACTLOGO.md](docs/CONTACTLOGO.md).
 
 ## Why it exists
 
