@@ -53,8 +53,9 @@ public struct MatchPipeline: Sendable {
         guard klass != .nonBrand else {
             return MatchResult(contactID: c.id, contactClass: klass, candidates: [], confidence: .skip, flags: ["non-brand"])
         }
-        if klass == .person, c.hasImage {
-            return MatchResult(contactID: c.id, contactClass: klass, candidates: [], confidence: .skip, flags: ["photo-protected"])
+        if klass == .person {
+            let flag = c.hasImage ? "photo-protected" : "person"
+            return MatchResult(contactID: c.id, contactClass: klass, candidates: [], confidence: .skip, flags: [flag])
         }
 
         let rawName = inferCompanyFromLoneName(c)
@@ -117,6 +118,11 @@ public struct MatchPipeline: Sendable {
         if best?.source == .favicon {
             conf = min(conf, .medium)
             flags.append("favicon-fallback")
+        }
+        // Business cards that already have a photo are review-only (never pre-checked).
+        if c.hasImage {
+            conf = min(conf, .medium)
+            flags.append("replace-existing")
         }
         return MatchResult(contactID: c.id, contactClass: klass, candidates: ranked,
                            confidence: conf, flags: flags)

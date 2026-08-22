@@ -17,6 +17,7 @@ export type BookContact = {
   website?: string;
   photoDataUrl?: string;
   hadExistingPhoto?: boolean;
+  importSource?: "file" | "google" | "device";
 };
 
 const FREEMAIL = new Set([
@@ -169,8 +170,16 @@ export function resolveIdentity(c: BookContact, brandName: string): { domain: st
   return undefined;
 }
 
-export function wantsSuggestion(c: BookContact, klass: ContactClass): boolean {
-  if (klass === "nonBrand") return false;
-  if (klass === "person" && c.hadExistingPhoto) return false;
-  return true;
+export function wantsSuggestion(_contact: BookContact, klass: ContactClass): boolean {
+  switch (klass) {
+    case "nonBrand":
+    case "person":
+      return false;
+    case "businessCard":
+      return true;
+    default: {
+      const _never: never = klass;
+      return _never;
+    }
+  }
 }

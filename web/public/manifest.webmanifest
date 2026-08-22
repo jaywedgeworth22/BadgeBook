@@ -1,0 +1,17 @@
+{
+  "name": "ContactLogo",
+  "short_name": "ContactLogo",
+  "description": "Brand icons for your address book.  Review every logo before it is written.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f0e8",
+  "theme_color": "#1c1917",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -3,8 +3,17 @@ import {
   type BookContact,
 } from "./engine/classify.ts";
 import { looksLikeContactCsv, parseGoogleCsv } from "./engine/csv.ts";
-import { composeFromFile, sourceLabel, viaLabel } from "./engine/logos.ts";
+import { importGoogleContacts } from "./engine/google-contacts.ts";
+import {
+  composeFromFile,
+  composeFromUrl,
+  embedSrc,
+  sourceLabel,
+  viaLabel,
+} from "./engine/logos.ts";
 import { bucket, matchBook, type ReviewItem } from "./engine/match.ts";
+import { canPickDeviceContacts, pickDeviceContacts } from "./engine/picker.ts";
+import { getGoogleClientId, setGoogleClientId } from "./engine/settings.ts";
 import { backupFilename, contactsToVcard, downloadText, parseVcard } from "./engine/vcard.ts";
 
 type State = {
@@ -12,6 +21,7 @@ type State = {
   items: ReviewItem[];
   stage: "idle" | "review";
   notice: string;
+  showSettings: boolean;
 };
 
 const state: State = {
@@ -19,6 +29,7 @@ const state: State = {
   items: [],
   stage: "idle",
   notice: "",
+  showSettings: false,
 };
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -35,20 +46,25 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-function importText(name: string, text: string) {
-  const contacts = name.toLowerCase().endsWith(".csv") || looksLikeContactCsv(text)
-    ? parseGoogleCsv(text)
-    : parseVcard(text);
+function adopt(contacts: BookContact[], label: string) {
   if (contacts.length === 0) {
-    state.notice = "No contacts found in that file.";
+    state.notice = "No contacts found.";
     render();
     return;
   }
   state.contacts = contacts;
   state.items = matchBook(contacts);
   state.stage = "review";
-  state.notice = `Imported ${contacts.length} contact${contacts.length === 1 ? "" : "s"}. Review every logo before download.`;
+  state.notice = `${label}: ${contacts.length} contact${contacts.length === 1 ? "" : "s"}.  Review every logo before download.`;
   render();
+}
+
+function importText(name: string, text: string) {
+  const contacts = name.toLowerCase().endsWith(".csv") || looksLikeContactCsv(text)
+    ? parseGoogleCsv(text)
+    : parseVcard(text);
+  for (const c of contacts) c.importSource = "file";
+  adopt(contacts, `Imported ${name}`);
 }
 
 async function importFile(file: File) {
@@ -56,6 +72,38 @@ async function importFile(file: File) {
   render();
   const text = await file.text();
   importText(file.name, text);
+}
+
+async function importFromGoogle() {
+  try {
+    state.notice = "Connecting to Google…";
+    render();
+    const contacts = await importGoogleContacts((n) => {
+      state.notice = `Reading Google Contacts · ${n}`;
+      render();
+    });
+    adopt(contacts, "Google Contacts");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Google import failed";
+    state.notice =
+      message === "GOOGLE_CONTACTS_NOT_CONFIGURED"
+        ? "Set a Google OAuth client id in Settings, then try again."
+        : message;
+    if (message === "GOOGLE_CONTACTS_NOT_CONFIGURED") state.showSettings = true;
+    render();
+  }
+}
+
+async function importFromDevice() {
+  try {
+    state.notice = "Opening the device address book…";
+    render();
+    const contacts = await pickDeviceContacts();
+    adopt(contacts, "This phone");
+  } catch (err) {
+    state.notice = err instanceof Error ? err.message : "Could not read contacts";
+    render();
+  }
 }
 
 function applySelected(): BookContact[] {
@@ -74,8 +122,18 @@ function downloadBackup() {
   downloadText(backupFilename(), contactsToVcard(state.contacts), "text/vcard;charset=utf-8");
 }
 
-function downloadUpdated() {
-  downloadText("contactlogo-contacts.vcf", contactsToVcard(applySelected()), "text/vcard;charset=utf-8");
+async function downloadUpdated() {
+  state.notice = "Embedding approved logos…";
+  render();
+  const updated = applySelected();
+  for (const contact of updated) {
+    if (contact.photoDataUrl && !contact.photoDataUrl.startsWith("data:")) {
+      contact.photoDataUrl = await embedSrc(contact.photoDataUrl);
+    }
+  }
+  downloadText("contactlogo-contacts.vcf", contactsToVcard(updated), "text/vcard;charset=utf-8");
+  state.notice = "Download started.  Import the vCard back into your address book.";
+  render();
 }
 
 function setAllHigh(selected: boolean) {
@@ -92,6 +150,29 @@ async function uploadFor(item: ReviewItem, file: File) {
   item.selected = true;
   item.confidence = "high";
   item.flags = item.flags.filter((f) => f !== "non-brand");
+  render();
+}
+
+async function pasteUrlFor(item: ReviewItem) {
+  const raw = window.prompt("Paste an image URL");
+  if (!raw) return;
+  try {
+    const src = await composeFromUrl(raw);
+    item.candidates = [{ src, source: "url", kind: "icon" }, ...item.candidates];
+    item.chosenIndex = 0;
+    item.selected = true;
+    item.confidence = "high";
+    render();
+  } catch (err) {
+    state.notice = err instanceof Error ? err.message : "Could not use that URL";
+    render();
+  }
+}
+
+function tryAnother(item: ReviewItem) {
+  if (item.candidates.length < 2) return;
+  item.chosenIndex = (item.chosenIndex + 1) % item.candidates.length;
+  item.selected = true;
   render();
 }
 
@@ -127,6 +208,11 @@ function card(item: ReviewItem): HTMLElement {
   });
   const uploadBtn = el("button", { class: "btn secondary", type: "button" }, "Upload");
   uploadBtn.addEventListener("click", () => upload.click());
+  const pasteBtn = el("button", { class: "btn secondary", type: "button" }, "Paste URL");
+  pasteBtn.addEventListener("click", () => void pasteUrlFor(item));
+  const retry = el("button", { class: "btn secondary", type: "button" }, "Try another");
+  retry.disabled = item.candidates.length < 2;
+  retry.addEventListener("click", () => tryAnother(item));
   const skip = el("button", { class: "btn ghost", type: "button" }, "Skip");
   skip.addEventListener("click", () => {
     item.selected = false;
@@ -150,7 +236,7 @@ function card(item: ReviewItem): HTMLElement {
         `${item.confidence} · ${source}${via ? ` · ${via}` : ""}${item.flags.length ? ` · ${item.flags.join(", ")}` : ""}`,
       ),
       alts,
-      el("div", { class: "actions" }, uploadBtn, skip, upload),
+      el("div", { class: "actions" }, retry, uploadBtn, pasteBtn, skip, upload),
     ),
   );
 }
@@ -163,24 +249,60 @@ function section(title: string, items: ReviewItem[]): HTMLElement {
   return wrap;
 }
 
+function settingsPanel(): HTMLElement {
+  const input = el("input", {
+    type: "text",
+    class: "settings-input",
+    placeholder: "Google OAuth client id",
+    value: getGoogleClientId(),
+    autocomplete: "off",
+  }) as HTMLInputElement;
+  const save = el("button", { class: "btn secondary", type: "button" }, "Save");
+  save.addEventListener("click", () => {
+    setGoogleClientId(input.value);
+    state.notice = "Saved Google client id in this browser.  Contacts are still not stored.";
+    state.showSettings = false;
+    render();
+  });
+  return el(
+    "div",
+    { class: "settings" },
+    el("h2", {}, "Settings"),
+    el(
+      "p",
+      { class: "meta" },
+      "Optional Google People API client id for Import Google Contacts.  Stored only in this browser.  Contacts themselves stay in memory.",
+    ),
+    input,
+    save,
+  );
+}
+
 export function render() {
   const root = document.getElementById("app");
   if (!root) return;
   root.replaceChildren();
 
   const app = el("div", { class: "app" });
+  const settingsBtn = el("button", { class: "btn ghost", type: "button" }, "Settings");
+  settingsBtn.addEventListener("click", () => {
+    state.showSettings = !state.showSettings;
+    render();
+  });
   app.append(
     el(
       "header",
       { class: "hero" },
-      el("h1", {}, "ContactLogo"),
+      el("div", { class: "hero-row" }, el("h1", {}, "ContactLogo"), settingsBtn),
       el(
         "p",
         {},
-        "Brand icons for your address book. Upload a vCard or Google CSV, review every match, then download an updated card. Existing photos are never replaced unless you check the box.",
+        "Brand icons for your address book.  Import a vCard, Google CSV, Google Contacts, or this phone, review every match, then download an updated card.  Existing person photos are never replaced.  Business photos already on a card stay in Needs review.",
       ),
     ),
   );
+
+  if (state.showSettings) app.append(settingsPanel());
 
   const file = el("input", { type: "file", accept: ".vcf,.vcard,.csv,text/vcard,text/csv", class: "hidden" }) as HTMLInputElement;
   file.addEventListener("change", () => {
@@ -190,12 +312,20 @@ export function render() {
   });
   const pick = el("button", { class: "btn", type: "button" }, "Import vCard or CSV");
   pick.addEventListener("click", () => file.click());
+  const google = el("button", { class: "btn secondary", type: "button" }, "Import Google Contacts");
+  google.addEventListener("click", () => void importFromGoogle());
+  const actions: HTMLElement[] = [pick, google];
+  if (canPickDeviceContacts()) {
+    const device = el("button", { class: "btn secondary", type: "button" }, "Import from this phone");
+    device.addEventListener("click", () => void importFromDevice());
+    actions.push(device);
+  }
 
   const drop = el(
     "div",
     { class: "drop" },
-    el("div", {}, el("strong", {}, "Import an address book"), el("span", {}, "Contacts stay in this browser. Nothing is uploaded to a server.")),
-    pick,
+    el("div", {}, el("strong", {}, "Import an address book"), el("span", {}, "Contacts stay in this browser.  Nothing is uploaded to a server.")),
+    ...actions,
     file,
   );
   drop.addEventListener("dragover", (e) => e.preventDefault());
@@ -227,7 +357,7 @@ export function render() {
     const backup = el("button", { class: "btn secondary", type: "button" }, "Download backup");
     backup.addEventListener("click", downloadBackup);
     const save = el("button", { class: "btn", type: "button" }, "Download approved vCard");
-    save.addEventListener("click", downloadUpdated);
+    save.addEventListener("click", () => void downloadUpdated());
     app.append(el("div", { class: "toolbar" }, selectHigh, clearHigh, backup, save));
     app.append(section("Ready to apply", groups.auto));
     app.append(section("Needs review", groups.review));
@@ -238,7 +368,7 @@ export function render() {
     el(
       "p",
       { class: "footer" },
-      "Review-first: high-confidence matches are pre-checked; guessed domains and favicons stay in review. The company catalog, phone directory, and iconic-mark sources power the suggestions. Native macOS and iOS apps use the same rules in ContactLogoKit.",
+      "Review-first: high-confidence matches are pre-checked; guessed domains, favicons, and existing business photos stay in review.  Native macOS and iOS apps use the same rules in ContactLogoKit.  Frozen originals of BadgeBook and Crest live in backups/.",
     ),
   );
   root.append(app);

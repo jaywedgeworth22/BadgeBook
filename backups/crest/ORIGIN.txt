@@ -1,0 +1,16 @@
+Product: Crest
+Role: Original TypeScript PWA (vCard / Google / device picker, scan, review)
+Backup date: 2026-08-21
+Snapshot SHA: 8b4ca7282684c0ff4a35700d10ee4999a0fdddba
+Snapshot subject: Initial public release of Crest under Apache-2.0
+Remote: https://github.com/jaywedgeworth22/crest.git
+
+IMPORTANT: GitHub main as of 2026-08-21 is 082d0a11b8eb896308be2e25f50c0abffc061408,
+an archive-pointer README only.  Do not clone current main to recover the app.
+This directory is the full source from the public-release commit, taken from
+git objects already in ContactLogo (subtree import).
+
+The live subtree (same history, later ContactLogo-named docs) is vendor/crest/.
+Live product as of 2026-08-21: `/Users/jay/Code/ContactLogo`, GitHub
+`jaywedgeworth22/ContactLogo`.  GitHub `jaywedgeworth22/crest` is archived.
+Restore: copy this directory, then `npm install && npm run dev`.

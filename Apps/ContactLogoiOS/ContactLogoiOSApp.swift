@@ -21,22 +21,8 @@ struct ContactLogoiOSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("ContactLogo").font(.largeTitle.bold())
-                    Text("Brand icons for your address book. Review every logo before it is written.")
-                        .foregroundStyle(.secondary)
-                    Label("Ready to apply (\(model.autoAccepted.count))", systemImage: "checkmark.circle.fill")
-                    Label("Needs review (\(model.needsReview.count))", systemImage: "questionmark.circle")
-                    Label("Not found (\(model.notFound.count))", systemImage: "minus.circle")
-                    Button("Scan contacts") { Task { await model.scanAndMatch() } }
-                        .buttonStyle(.borderedProminent)
-                    if model.stage == .review {
-                        Button("Apply selected") { Task { await model.applySelected() } }
-                    }
-                }
-                .padding()
-            }
+            ContentView()
+                .environmentObject(model)
         }
     }
 }

@@ -8,8 +8,8 @@ the product's moat — keep it current.
 
 | Class | Definition | Policy |
 | --- | --- | --- |
-| Person | has given or family name | Never auto-touch if a photo exists. Logo allowed only when no photo AND organization present. |
-| Business card | no given/family name; display name is a company ("FedEx", "H-E-B Pharmacy (Bridgeland)") | Primary target set. Logo allowed even if a photo exists, but only via review. |
+| Person | has given or family name | Never a logo target.  Existing photos stay.  Employees are not the company. |
+| Business card | no given/family name; display name is a company ("FedEx", "H-E-B Pharmacy (Bridgeland)") | Primary target set.  Logo allowed even if a photo exists, but only via review (`replace-existing` caps at medium). |
 | Non-brand | name is generic ("Hospital", "Gift Card", "Manager", "Verification Code", "Printer at Farm") | Hard skip by default (blocklist). Show in "not a brand" bucket, never in "not found". |
 
 Notes:

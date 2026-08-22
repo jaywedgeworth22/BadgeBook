@@ -24,18 +24,42 @@ export type ReviewItem = {
 };
 
 function confidenceFor(item: Omit<ReviewItem, "selected" | "chosenIndex" | "confidence">): Confidence {
-  if (item.contactClass === "nonBrand") return "skip";
-  if (item.contactClass === "person" && item.contact.hadExistingPhoto) return "skip";
+  switch (item.contactClass) {
+    case "nonBrand":
+    case "person":
+      return "skip";
+    case "businessCard":
+      break;
+    default: {
+      const _never: never = item.contactClass;
+      return _never;
+    }
+  }
   if (item.candidates.length === 0) return "skip";
   const best = item.candidates[0];
   let tier: Confidence = "medium";
-  if (best.source === "preferred" || best.source === "simpleicons") tier = "high";
-  if (best.source === "favicon") tier = "medium";
+  switch (best.source) {
+    case "preferred":
+    case "simpleicons":
+      tier = "high";
+      break;
+    case "favicon":
+    case "upload":
+    case "url":
+      tier = "medium";
+      break;
+    default: {
+      const _never: never = best.source;
+      void _never;
+      break;
+    }
+  }
   if (item.via === "guess") tier = "medium";
   if (item.flags.includes("homonym-risk") && item.via !== "website" && item.via !== "email") {
     tier = "medium";
   }
   if (item.via === "guess" && best.source === "favicon") tier = "low";
+  if (item.flags.includes("replace-existing") && tier === "high") tier = "medium";
   return tier;
 }
 
@@ -54,14 +78,14 @@ export function matchContact(contact: BookContact): ReviewItem {
       chosenIndex: 0,
     };
   }
-  if (contactClass === "person" && contact.hadExistingPhoto) {
+  if (contactClass === "person") {
     return {
       contact,
       contactClass,
       query,
       candidates: [],
       confidence: "skip",
-      flags: [...flags, "photo-protected"],
+      flags: [...flags, contact.hadExistingPhoto ? "photo-protected" : "person"],
       selected: false,
       chosenIndex: 0,
     };
@@ -69,6 +93,7 @@ export function matchContact(contact: BookContact): ReviewItem {
   const identity = resolveIdentity(contact, query);
   if (identity) flags.push(`via-${identity.via}`);
   if (identity?.via === "guess") flags.push("guessed-domain");
+  if (contact.hadExistingPhoto) flags.push("replace-existing");
   const candidates = identity ? candidateUrls(identity.domain) : [];
   const base = {
     contact,

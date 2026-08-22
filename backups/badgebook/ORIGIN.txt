@@ -1,0 +1,18 @@
+Product: BadgeBook
+Role: Original Swift matching engine, CLI, and macOS/iOS shells
+Backup date: 2026-08-21
+Snapshot SHA: 18fcf2591dc479d37c3efee3c6f04baed23085ff
+Snapshot subject: Phase 1 MVP: Contacts provider, undo log, badgebook CLI (scan/match/review/apply/undo)
+Remote: https://github.com/jaywedgeworth22/BadgeBook.git
+Branch at snapshot: main (local clone /Users/jay/Code/BadgeBook)
+
+Live product as of 2026-08-21: folder `/Users/jay/Code/ContactLogo`, GitHub
+`jaywedgeworth22/ContactLogo` (old BadgeBook slug redirects).  This snapshot
+directory name stays `backups/badgebook/`.
+
+This tree is the last BadgeBook-named source before Crest was combined
+(combine commit 4e53be299b5daf9cc32a9b103a1b6d54d68888dc).  Names inside
+this snapshot still say BadgeBook / BadgeBookKit / badgebook.
+
+Restore: copy this directory.  History also lives in the parent repo
+(`git checkout 18fcf2591dc479d37c3efee3c6f04baed23085ff`).
