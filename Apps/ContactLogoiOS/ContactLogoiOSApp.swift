@@ -6,7 +6,7 @@ import ContactLogoKit
 /// queue is the same three-bucket contract as macOS and the web app.
 @main
 struct ContactLogoiOSApp: App {
-    static let matchTaskIdentifier = "app.contactlogo.match"
+    static let matchTaskIdentifier = "com.contactlogo.match"
     @StateObject private var model = ReviewSession()
 
     init() {
