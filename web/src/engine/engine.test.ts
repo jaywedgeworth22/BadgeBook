@@ -24,6 +24,11 @@ test("catalog finds brands and location tails", () => {
   assert.equal(lookupCompanyDomain("Walgreens"), "walgreens.com");
   assert.equal(lookupCompanyDomain("Walgreens Mason Rd"), "walgreens.com");
   assert.equal(lookupCompanyDomain("H-E-B"), "heb.com");
+  assert.equal(lookupCompanyDomain("Charles Schwab"), "schwab.com");
+  assert.equal(lookupCompanyDomain("Kaiser Permanente"), "kp.org");
+  assert.equal(lookupCompanyDomain("Buc-ee's"), "buc-ees.com");
+  assert.equal(lookupCompanyDomain("Spectrum"), "spectrum.com");
+  assert.equal(lookupCompanyDomain("Kroger Marketplace Cypress"), "kroger.com");
   assert.equal(lookupCompanyDomain("Maya Chen"), undefined);
 });
 

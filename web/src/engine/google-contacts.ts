@@ -1,7 +1,8 @@
 import type { BookContact } from "./classify.ts";
 import { getGoogleClientId } from "./settings.ts";
 
-const CONTACTS_SCOPE = "https://www.googleapis.com/auth/contacts.readonly";
+const CONTACTS_READ_SCOPE = "https://www.googleapis.com/auth/contacts.readonly";
+const CONTACTS_WRITE_SCOPE = "https://www.googleapis.com/auth/contacts";
 const PERSON_FIELDS = "names,emailAddresses,phoneNumbers,organizations,urls,photos";
 
 type TokenClient = {
@@ -22,6 +23,9 @@ declare global {
     google?: { accounts?: { oauth2?: GisOauth } };
   }
 }
+
+let cachedAccessToken: string | null = null;
+let tokenHasWriteScope = false;
 
 function loadGis(): Promise<GisOauth> {
   if (window.google?.accounts?.oauth2) return Promise.resolve(window.google.accounts.oauth2);
@@ -50,25 +54,35 @@ function loadGis(): Promise<GisOauth> {
   });
 }
 
-async function requestAccessToken(clientId: string): Promise<string> {
+export async function requestAccessToken(clientId: string, requireWrite = false): Promise<string> {
+  if (cachedAccessToken && (!requireWrite || tokenHasWriteScope)) {
+    return cachedAccessToken;
+  }
   const oauth = await loadGis();
+  const scope = requireWrite ? CONTACTS_WRITE_SCOPE : CONTACTS_READ_SCOPE;
   return new Promise((resolve, reject) => {
     const client = oauth.initTokenClient({
       client_id: clientId,
-      scope: CONTACTS_SCOPE,
+      scope,
       callback: (resp) => {
-        if (resp.access_token) resolve(resp.access_token);
-        else reject(new Error(resp.error_description || resp.error || "Google access was denied"));
+        if (resp.access_token) {
+          cachedAccessToken = resp.access_token;
+          tokenHasWriteScope = requireWrite;
+          resolve(resp.access_token);
+        } else {
+          reject(new Error(resp.error_description || resp.error || "Google access was denied"));
+        }
       },
       error_callback: (err) => {
         reject(new Error(err.message || "Google sign-in was cancelled"));
       },
     });
-    client.requestAccessToken({ prompt: "consent" });
+    client.requestAccessToken({ prompt: requireWrite ? "consent" : "" });
   });
 }
 
-type Person = {
+export type Person = {
+  resourceName?: string;
   names?: Array<{ displayName?: string; givenName?: string; familyName?: string }>;
   emailAddresses?: Array<{ value?: string }>;
   phoneNumbers?: Array<{ value?: string }>;
@@ -116,6 +130,7 @@ export function personToBookContact(person: Person): BookContact | null {
     website: person.urls?.[0]?.value,
     hadExistingPhoto: Boolean(photo),
     importSource: "google",
+    googleResourceName: person.resourceName,
   };
 }
 
@@ -124,7 +139,31 @@ export async function importGoogleContacts(onProgress?: (n: number) => void): Pr
   if (!clientId) {
     throw new Error("GOOGLE_CONTACTS_NOT_CONFIGURED");
   }
-  const token = await requestAccessToken(clientId);
+  const token = await requestAccessToken(clientId, false);
   const people = await fetchConnections(token, onProgress);
   return people.map(personToBookContact).filter((c): c is BookContact => Boolean(c));
+}
+
+/** Update contact photo in Google People API */
+export async function updateGoogleContactPhoto(
+  resourceName: string,
+  photoDataUrlOrBase64: string,
+  token: string,
+): Promise<void> {
+  const base64Data = photoDataUrlOrBase64.includes(",")
+    ? photoDataUrlOrBase64.split(",")[1]
+    : photoDataUrlOrBase64;
+  const url = `https://people.googleapis.com/v1/${encodeURIComponent(resourceName)}:updateContactPhoto`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ photoBytes: base64Data }),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`Failed to update photo for ${resourceName}: ${res.status} ${errText}`);
+  }
 }

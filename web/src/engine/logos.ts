@@ -196,3 +196,53 @@ export async function embedSrc(src: string): Promise<string> {
     return src;
   }
 }
+
+/**
+ * Render any image / svg onto a square canvas (512x512) centered within
+ * a circular safe-ring with customizable padding and optional badge backing.
+ */
+export async function padAndSquareImage(
+  src: string,
+  options: { size?: number; paddingFraction?: number; addBadgeForDarkAlpha?: boolean } = {},
+): Promise<string> {
+  if (typeof document === "undefined") return src; // Node test environment fallback
+  const size = options.size ?? 512;
+  const padding = options.paddingFraction ?? 0.15; // 15% safe margin for circular contact icons
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return src;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const availWidth = size * (1 - padding * 2);
+      const availHeight = size * (1 - padding * 2);
+      const scale = Math.min(availWidth / img.width, availHeight / img.height, 1.0);
+      const drawWidth = img.width * scale;
+      const drawHeight = img.height * scale;
+      const drawX = (size - drawWidth) / 2;
+      const drawY = (size - drawHeight) / 2;
+
+      // Check if we should add a circular / rounded badge
+      if (options.addBadgeForDarkAlpha) {
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+      try {
+        resolve(canvas.toDataURL("image/png"));
+      } catch {
+        resolve(src);
+      }
+    };
+    img.onerror = () => resolve(src);
+    img.src = src;
+  });
+}
+

@@ -94,3 +94,52 @@ button { cursor: pointer; }
 
 .footer { margin-top: 40px; color: var(--muted); font-size: 0.85rem; }
 .hidden { display: none; }
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 20px 0 8px;
+  flex-wrap: wrap;
+}
+.search-input {
+  flex: 1;
+  min-width: 240px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-size: 0.95rem;
+}
+.mask-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.mask-toggle input { cursor: pointer; }
+.thumb.circle-mask {
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.google-sync-btn {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  font-weight: 500;
+}
+.google-sync-btn:hover {
+  background: #1d4ed8;
+}
+.notice-banner {
+  background: var(--card);
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-top: 12px;
+}
+
