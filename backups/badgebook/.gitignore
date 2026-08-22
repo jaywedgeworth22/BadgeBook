@@ -1,0 +1,21 @@
+# Swift / Xcode
+.build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+.swiftpm/
+Package.resolved
+
+# Web
+node_modules/
+.next/
+.vercel
+
+# OS / editor
+.DS_Store
+*.swp
+
+# Secrets — never commit API keys
+.env
+.env.*
+secrets.json

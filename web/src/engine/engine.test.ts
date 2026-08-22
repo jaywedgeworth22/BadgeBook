@@ -123,3 +123,59 @@ test("identity prefers website then catalog then phone", () => {
   assert.equal(phone?.via, "phone");
   assert.equal(phone?.domain, "fedex.com");
 });
+
+test("people are never logo targets; lone firm names are", async () => {
+  const employee = matchContact({
+    id: "1",
+    displayName: "Maya Chen",
+    givenName: "Maya",
+    familyName: "Chen",
+    organization: "Apple",
+  });
+  assert.equal(employee.confidence, "skip");
+  assert.equal(employee.flags.includes("person"), true);
+});
+
+test("existing business photos stay in review", () => {
+  const fedex = matchContact({ id: "1", displayName: "FedEx", hadExistingPhoto: true });
+  assert.equal(fedex.flags.includes("replace-existing"), true);
+  assert.notEqual(fedex.confidence, "high");
+  assert.equal(fedex.selected, false);
+});
+
+test("companies logo slug picker matches Swift", async () => {
+  const { pickCompaniesLogoSlug, pickCompaniesLogoIconHref } = await import("./companieslogo.ts");
+  const catalog = ["delta-air-lines", "walgreens", "home-depot", "jp-morgan-chase"];
+  assert.equal(pickCompaniesLogoSlug(catalog, { domain: "delta.com", name: "Delta" }), "delta-air-lines");
+  assert.equal(pickCompaniesLogoSlug(catalog, { name: "Walgreens" }), "walgreens");
+  assert.equal(
+    pickCompaniesLogoIconHref('<img src="/img/orig/Walgreens_big.png"><img src="/img/orig/Walgreens.svg">'),
+    "https://companieslogo.com/img/orig/Walgreens.svg",
+  );
+});
+
+test("source labels cover every logo source", async () => {
+  const { sourceLabel } = await import("./logos.ts");
+  assert.equal(sourceLabel("preferred"), "Iconic mark");
+  assert.equal(sourceLabel("simpleicons"), "Simple Icons");
+  assert.equal(sourceLabel("favicon"), "Favicon");
+  assert.equal(sourceLabel("upload"), "Your file");
+  assert.equal(sourceLabel("url"), "Pasted URL");
+});
+
+test("google person mapping", async () => {
+  const { personToBookContact } = await import("./google-contacts.ts");
+  const contact = personToBookContact({
+    names: [{ displayName: "FedEx", givenName: "FedEx" }],
+    organizations: [{ name: "FedEx" }],
+    emailAddresses: [{ value: "x@fedex.com" }],
+  });
+  assert.equal(contact?.displayName, "FedEx");
+  assert.equal(contact?.organization, "FedEx");
+  assert.equal(contact?.importSource, "google");
+});
+
+test("device picker is off in Node", async () => {
+  const { canPickDeviceContacts } = await import("./picker.ts");
+  assert.equal(canPickDeviceContacts(), false);
+});

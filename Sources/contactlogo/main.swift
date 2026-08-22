@@ -28,26 +28,7 @@ struct CLI {
     }
 
     static func makePipeline() -> MatchPipeline {
-        var sources: [any LogoSource] = [
-            PreferredMarksSource(),
-            SimpleIconsSource(),
-            WikimediaSource(),
-            FaviconSource()
-        ]
-        if let clientID = env("CONTACTLOGO_BRANDFETCH_CLIENT_ID") {
-            sources.insert(BrandfetchSource(brandAPIKey: env("CONTACTLOGO_BRANDFETCH_API_KEY"),
-                                            logoClientID: clientID), at: 1)
-        }
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 20
-        config.timeoutIntervalForResource = 30
-        let session = URLSession(configuration: config)
-        return MatchPipeline(sources: sources) { url in
-            if url.scheme == "data" { return Data(contentsOf: url) }
-            let req = BrandfetchSource.cdnRequest(url: url)
-            let (data, _) = try await session.data(for: req)
-            return data
-        }
+        DefaultSources.makePipeline()
     }
 }
 
@@ -132,14 +113,11 @@ struct ContactLogoCLI {
             throw NSError(domain: "ContactLogo", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access denied"])
         }
         let contacts = try await provider.fetchCandidates()
-        let businessOnly = args.contains("--business-only")
         let pipelineTargets = contacts.filter {
-            let klass = pipeline.classify($0)
-            if case .nonBrand = klass { return false }
-            if case .businessCard = klass { return true }
-            if businessOnly { return false }
-            if $0.hasImage { return false } // photo-protected persons
-            return true
+            switch pipeline.classify($0) {
+            case .businessCard: return true
+            case .person, .nonBrand: return false
+            }
         }
         let targets = limit.map { Array(pipelineTargets.prefix($0)) } ?? pipelineTargets
         print("matching \(targets.count) contacts…")
@@ -162,7 +140,10 @@ struct ContactLogoCLI {
                 }
             }
             let conf: String = switch result.confidence {
-            case .high: "high"; case .medium: "medium"; case .low: "low"; case .skip: "skip"
+            case .high: "high"
+            case .medium: "medium"
+            case .low: "low"
+            case .skip: "skip"
             }
             stored.append(StoredResult(contactID: c.id, displayName: c.displayName,
                                        confidence: conf, flags: result.flags,

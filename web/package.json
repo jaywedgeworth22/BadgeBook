@@ -3,7 +3,7 @@
   "private": true,
   "license": "Apache-2.0",
   "description": "ContactLogo Web — review-first logo matching for a vCard or Google CSV",
-  "homepage": "https://contactlogo.grok.me",
+  "homepage": "https://contact-logo.grok.me",
   "type": "module",
   "scripts": {
     "dev": "vite",

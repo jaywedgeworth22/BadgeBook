@@ -1,0 +1,126 @@
+import Foundation
+
+/// A contact reduced to what the engine needs. Platform shells build these
+/// from CNContact (native) or vCard entries (web).
+public struct ContactIdentity: Sendable, Hashable {
+    public let id: String
+    public var displayName: String
+    public var givenName: String?
+    public var familyName: String?
+    public var organization: String?
+    public var emailDomains: [String]
+    public var websiteHosts: [String]
+    public var hasImage: Bool
+
+    public init(id: String, displayName: String, givenName: String? = nil,
+                familyName: String? = nil, organization: String? = nil,
+                emailDomains: [String] = [], websiteHosts: [String] = [],
+                hasImage: Bool = false) {
+        self.id = id
+        self.displayName = displayName
+        self.givenName = givenName
+        self.familyName = familyName
+        self.organization = organization
+        self.emailDomains = emailDomains
+        self.websiteHosts = websiteHosts
+        self.hasImage = hasImage
+    }
+}
+
+public enum ContactClass: Sendable {
+    /// Has given/family name. Photo-protected: never overwrite an existing photo.
+    case person
+    /// No person name — a pure business card ("FedEx", "H-E-B Pharmacy (…)").
+    case businessCard
+    /// Generic name that is not a brand ("Hospital", "Gift Card", "Printer …").
+    case nonBrand
+}
+
+public enum SourceKind: String, Sendable {
+    case brandfetch, wikimedia, googleCSE, googleScrape, manual
+}
+
+/// One logo option for a contact. The pipeline keeps the top N, not just the winner.
+public struct LogoCandidate: Sendable, Hashable {
+    public let source: SourceKind
+    public let imageURL: URL
+    public let pageURL: URL?
+    public var pixelWidth: Int?
+    public var pixelHeight: Int?
+    /// Brandfetch asset type: "icon" (pictographic) beats "logo" (wordmark).
+    public var assetType: String?
+    public var altText: String?
+
+    public var aspectRatio: Double? {
+        guard let w = pixelWidth, let h = pixelHeight, h > 0 else { return nil }
+        return Double(w) / Double(h)
+    }
+
+    /// Square rule: 0.8...1.25 required for auto-accept (MATCHING-ENGINE §5.1).
+    public var isSquareish: Bool {
+        guard let r = aspectRatio else { return false }
+        return (0.8...1.25).contains(r)
+    }
+
+    public var isPictographic: Bool { assetType == "icon" }
+
+    public init(source: SourceKind, imageURL: URL, pageURL: URL? = nil,
+                pixelWidth: Int? = nil, pixelHeight: Int? = nil,
+                assetType: String? = nil, altText: String? = nil) {
+        self.source = source
+        self.imageURL = imageURL
+        self.pageURL = pageURL
+        self.pixelWidth = pixelWidth
+        self.pixelHeight = pixelHeight
+        self.assetType = assetType
+        self.altText = altText
+    }
+}
+
+public enum Confidence: Int, Comparable, Sendable {
+    case skip = 0, low = 1, medium = 2, high = 3
+    public static func < (lhs: Confidence, rhs: Confidence) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+}
+
+public struct MatchResult: Sendable {
+    public let contactID: String
+    public var contactClass: ContactClass
+    /// Ranked, best first. Empty when nothing acceptable was found.
+    public var candidates: [LogoCandidate]
+    public var confidence: Confidence
+    /// Trap flags for the review UI ("homonym-risk", "fallback-tile", ...).
+    public var flags: [String]
+
+    public init(contactID: String, contactClass: ContactClass,
+                candidates: [LogoCandidate], confidence: Confidence, flags: [String] = []) {
+        self.contactID = contactID
+        self.contactClass = contactClass
+        self.candidates = candidates
+        self.confidence = confidence
+        self.flags = flags
+    }
+}
+
+/// What actually gets written — and what is needed to undo it.
+public struct ChangeSet: Sendable {
+    public struct Entry: Sendable {
+        public let contactID: String
+        public let newImageData: Data
+        /// nil means the contact previously had no image.
+        public let previousImageData: Data?
+
+        public init(contactID: String, newImageData: Data, previousImageData: Data?) {
+            self.contactID = contactID
+            self.newImageData = newImageData
+            self.previousImageData = previousImageData
+        }
+    }
+    public let createdAt: Date
+    public var entries: [Entry]
+    public init(createdAt: Date = Date(), entries: [Entry]) {
+        self.createdAt = createdAt
+        self.entries = entries
+    }
+}

@@ -13,6 +13,7 @@ public final class ReviewSession: ObservableObject {
     @Published public var bucket: Bucket = .auto
     @Published public var results: [MatchResult] = []
     @Published public var selected: Set<String> = []
+    @Published public var chosenIndex: [String: Int] = [:]
     @Published public var names: [String: String] = [:]
     @Published public var lastBatchID: String?
 
@@ -33,17 +34,27 @@ public final class ReviewSession: ObservableObject {
         if on { selected.formUnion(ids) } else { selected.subtract(ids) }
     }
 
+    public func chosenCandidate(for result: MatchResult) -> LogoCandidate? {
+        let idx = chosenIndex[result.contactID] ?? 0
+        guard result.candidates.indices.contains(idx) else { return result.candidates.first }
+        return result.candidates[idx]
+    }
+
+    public func cycleCandidate(_ id: String) {
+        guard let result = results.first(where: { $0.contactID == id }) else { return }
+        let count = result.candidates.count
+        guard count > 1 else { return }
+        chosenIndex[id] = ((chosenIndex[id] ?? 0) + 1) % count
+        selected.insert(id)
+    }
+
+    public func setChosenIndex(_ id: String, _ index: Int) {
+        chosenIndex[id] = index
+        selected.insert(id)
+    }
+
     public static func makePipeline() -> MatchPipeline {
-        MatchPipeline(sources: [
-            PreferredMarksSource(),
-            SimpleIconsSource(),
-            WikimediaSource(),
-            FaviconSource()
-        ]) { url in
-            if url.scheme == "data" { return Data(contentsOf: url) }
-            let (data, _) = try await URLSession.shared.data(from: url)
-            return data
-        }
+        DefaultSources.makePipeline()
     }
 
     public func scanAndMatch() async {
@@ -66,6 +77,7 @@ public final class ReviewSession: ObservableObject {
                 stage = .matching(done: i + 1, total: targets.count)
             }
             results = out
+            chosenIndex = [:]
             selected = Set(out.filter { $0.confidence == .high }.map(\.contactID))
             stage = .review
         } catch {
@@ -82,7 +94,7 @@ public final class ReviewSession: ObservableObject {
         let provider = CNContactsProvider()
         var entries: [ChangeSet.Entry] = []
         for result in results where selected.contains(result.contactID) {
-            guard let url = result.candidates.first?.imageURL,
+            guard let url = chosenCandidate(for: result)?.imageURL,
                   let data = try? await Self.fetchImage(url),
                   data.count > 80 else { continue }
             let prev = try? await provider.imageData(forContactID: result.contactID)
@@ -111,9 +123,7 @@ public final class ReviewSession: ObservableObject {
     }
 
     public static func fetchImage(_ url: URL) async throws -> Data {
-        if url.scheme == "data" { return try Data(contentsOf: url) }
-        let (data, _) = try await URLSession.shared.data(from: url)
-        return data
+        try await DefaultSources.fetchImage(url)
     }
 }
 #endif

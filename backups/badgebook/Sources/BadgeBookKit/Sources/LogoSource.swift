@@ -1,0 +1,51 @@
+import Foundation
+
+/// A logo provider. Implementations must be deterministic for identical inputs
+/// (same query → same candidate list, modulo provider-side changes).
+public protocol LogoSource: Sendable {
+    var kind: SourceKind { get }
+    /// Free-form brand-name search (used for business cards without a domain).
+    func candidates(forBrandName name: String) async throws -> [LogoCandidate]
+    /// Direct domain lookup (used when the contact already yields a domain).
+    func candidates(forDomain domain: String) async throws -> [LogoCandidate]
+}
+
+public enum LogoSourceError: Error, Sendable {
+    case rateLimited(retryAfter: TimeInterval?)
+    case notFound
+    case misconfigured(String)
+}
+
+/// Minimal PNG/JPEG/WebP header dimension reader — the square rule must work
+/// without rendering images (MATCHING-ENGINE §3, scrape-mode note).
+public enum ImageDimensions {
+    public static func read(_ data: Data) -> (Int, Int)? {
+        if data.count >= 24, data.starts(with: [0x89, 0x50, 0x4E, 0x47]) { // PNG
+            func be32(_ o: Int) -> Int {
+                Int(data[o]) << 24 | Int(data[o + 1]) << 16 | Int(data[o + 2]) << 8 | Int(data[o + 3])
+            }
+            return (be32(16), be32(20))
+        }
+        if data.count >= 4, data[0] == 0xFF, data[1] == 0xD8 { // JPEG
+            var i = 2
+            while i + 9 < data.count {
+                if data[i] != 0xFF { i += 1; continue }
+                let marker = data[i + 1]
+                if marker == 0xC0 || marker == 0xC1 || marker == 0xC2 {
+                    let h = Int(data[i + 5]) << 8 | Int(data[i + 6])
+                    let w = Int(data[i + 7]) << 8 | Int(data[i + 8])
+                    return (w, h)
+                }
+                let len = Int(data[i + 2]) << 8 | Int(data[i + 3])
+                i += 2 + max(len, 1)
+            }
+        }
+        if data.count >= 30, data.starts(with: [0x52, 0x49, 0x46, 0x46]), // RIFF WEBP
+           data[8...11] == Data("WEBP".utf8), data[12...15] == Data("VP8 ".utf8) {
+            let w = Int(data[26]) | Int(data[27]) << 8
+            let h = Int(data[28]) | Int(data[29]) << 8
+            return (w & 0x3FFF, h & 0x3FFF)
+        }
+        return nil
+    }
+}

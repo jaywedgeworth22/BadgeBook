@@ -132,6 +132,14 @@ final class ClassificationTests: XCTestCase {
         let c = ContactIdentity(id: "1", displayName: "Hospital")
         XCTAssertEqual(pipeline.classify(c), .nonBrand)
     }
+    func testPersonIsSkippedEvenWithOrg() async {
+        let c = ContactIdentity(id: "1", displayName: "Maya Chen",
+                                givenName: "Maya", familyName: "Chen",
+                                organization: "Apple")
+        let result = await pipeline.match(c)
+        XCTAssertEqual(result.confidence, .skip)
+        XCTAssertTrue(result.flags.contains("person"))
+    }
 }
 
 final class SimpleIconsTests: XCTestCase {
@@ -158,6 +166,15 @@ final class CompaniesLogoPickerTests: XCTestCase {
             "home-depot"
         )
     }
+    func testPickIconHrefPrefersSvg() {
+        let html = """
+        <img src="/img/orig/Walgreens_big.png"><img src="/img/orig/Walgreens.svg">
+        """
+        XCTAssertEqual(
+            CompaniesLogoSource.pickIconHref(html),
+            "https://companieslogo.com/img/orig/Walgreens.svg"
+        )
+    }
 }
 
 final class ImageFlagsTests: XCTestCase {
@@ -182,5 +199,18 @@ final class RankerIconicSourcesTests: XCTestCase {
         let pref = LogoCandidate(source: .preferred, imageURL: URL(string: "https://x/p.svg")!,
                                  pixelWidth: 400, pixelHeight: 400, assetType: "icon", hasAlpha: true)
         XCTAssertEqual(CandidateRanker.rank([fav, pref]).first?.source, .preferred)
+    }
+}
+
+final class DefaultSourcesTests: XCTestCase {
+    func testNativeSourceOrder() {
+        let kinds = DefaultSources.logoSources(brandfetchClientID: nil).map(\.kind)
+        XCTAssertEqual(kinds.first, .preferred)
+        XCTAssertTrue(kinds.contains(.companiesLogo))
+        XCTAssertTrue(kinds.contains(.simpleIcons))
+        XCTAssertEqual(kinds.last, .favicon)
+        XCTAssertFalse(kinds.contains(.brandfetch))
+        let withBrand = DefaultSources.logoSources(brandfetchClientID: "test").map(\.kind)
+        XCTAssertEqual(withBrand[1], .brandfetch)
     }
 }

@@ -31,9 +31,45 @@ public struct CompaniesLogoSource: LogoSource, Sendable {
         "facebook.com": "facebook"
     ]
 
-    public init(catalog: [String] = [], session: URLSession = .shared) {
+    /// Slugs we can pick without downloading the CompaniesLogo sitemap.
+    ///  Values of `domainSlugs` plus common brand keys from the Simple Icons map.
+    public static let bundledCatalog: [String] = {
+        var slugs = Set(domainSlugs.values)
+        slugs.formUnion([
+            "apple", "microsoft", "amazon", "tesla", "netflix", "spotify", "adobe",
+            "walgreens", "cvs", "fedex", "ups", "usps", "walmart", "target",
+            "starbucks", "mcdonalds", "uber", "lyft", "nike", "usaa", "verizon",
+            "costco", "airbnb", "samsung", "sony", "ford", "bmw", "paypal",
+            "stripe", "visa", "mastercard"
+        ])
+        return slugs.sorted()
+    }()
+
+    public init(catalog: [String] = bundledCatalog, session: URLSession = .shared) {
         self.catalog = catalog
         self.session = session
+    }
+
+    /// Crest `pickIconHref`: first decent `/img/orig/...` asset on a logo page.
+    public static func pickIconHref(_ html: String) -> String? {
+        let pattern = #"/img/orig/[A-Za-z0-9._-]+\.(?:svg|png)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        let ns = html as NSString
+        let matches = regex.matches(in: html, range: NSRange(location: 0, length: ns.length))
+        let hrefs = matches.map { ns.substring(with: $0.range) }.filter {
+            !$0.contains("/icons/") && !$0.contains("account.svg") && !$0.contains("calendar")
+        }
+        func rank(_ h: String) -> Int {
+            var s = 0
+            let lower = h.lowercased()
+            if lower.contains("_big") { s -= 40 }
+            if lower.contains(".d-") { s -= 20 }
+            if lower.hasSuffix(".svg") { s += 30 }
+            if lower.hasSuffix(".png") { s += 8 }
+            return s
+        }
+        guard let best = hrefs.max(by: { rank($0) < rank($1) }) else { return nil }
+        return "https://companieslogo.com\(best)"
     }
 
     public static func tokens(_ value: String) -> [String] {
@@ -88,8 +124,17 @@ public struct CompaniesLogoSource: LogoSource, Sendable {
     private func candidates(domain: String?, name: String?) async throws -> [LogoCandidate] {
         guard !catalog.isEmpty,
               let slug = Self.pickSlug(catalog: catalog, domain: domain, name: name),
-              let url = URL(string: "https://companieslogo.com/\(slug)/logo/") else { return [] }
-        return [LogoCandidate(source: .companiesLogo, imageURL: url, pageURL: url,
-                              assetType: "icon", altText: slug)]
+              let page = URL(string: "https://companieslogo.com/\(slug)/logo/") else { return [] }
+        var req = URLRequest(url: page)
+        req.setValue("ContactLogo/1.0 (https://contact-logo.grok.me)", forHTTPHeaderField: "User-Agent")
+        req.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
+        req.timeoutInterval = 8
+        guard let (data, resp) = try? await session.data(for: req),
+              (resp as? HTTPURLResponse)?.statusCode == 200,
+              let html = String(data: data, encoding: .utf8),
+              let href = Self.pickIconHref(html),
+              let imageURL = URL(string: href) else { return [] }
+        return [LogoCandidate(source: .companiesLogo, imageURL: imageURL, pageURL: page,
+                              assetType: "icon", altText: slug, hasAlpha: href.hasSuffix(".svg"))]
     }
 }

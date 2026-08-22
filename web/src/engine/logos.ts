@@ -1,12 +1,16 @@
 import { lookupCompanyDomain } from "./catalog.ts";
 
-export type LogoSourceName = "preferred" | "simpleicons" | "favicon" | "upload";
+export type LogoSourceName = "preferred" | "simpleicons" | "favicon" | "upload" | "url";
 
 export type LogoHit = {
   src: string;
   source: LogoSourceName;
   kind: "icon" | "unknown";
 };
+
+function assertNever(value: never): never {
+  throw new Error(`unhandled logo value: ${String(value)}`);
+}
 
 const SIMPLE_SLUGS: Record<string, string> = {
   "apple.com": "apple",
@@ -15,10 +19,17 @@ const SIMPLE_SLUGS: Record<string, string> = {
   "amazon.com": "amazon",
   "meta.com": "meta",
   "facebook.com": "facebook",
+  "instagram.com": "instagram",
   "tesla.com": "tesla",
+  "nvidia.com": "nvidia",
   "netflix.com": "netflix",
   "spotify.com": "spotify",
   "adobe.com": "adobe",
+  "salesforce.com": "salesforce",
+  "oracle.com": "oracle",
+  "ibm.com": "ibm",
+  "intel.com": "intel",
+  "cisco.com": "cisco",
   "stripe.com": "stripe",
   "paypal.com": "paypal",
   "visa.com": "visa",
@@ -30,6 +41,7 @@ const SIMPLE_SLUGS: Record<string, string> = {
   "wellsfargo.com": "wellsfargo",
   "citi.com": "citigroup",
   "geico.com": "geico",
+  "statefarm.com": "statefarm",
   "verizon.com": "verizon",
   "att.com": "atandt",
   "t-mobile.com": "tmobile",
@@ -40,14 +52,25 @@ const SIMPLE_SLUGS: Record<string, string> = {
   "ups.com": "ups",
   "usps.com": "usps",
   "homedepot.com": "homedepot",
+  "lowes.com": "lowe's",
+  "costco.com": "costco",
   "walmart.com": "walmart",
   "target.com": "target",
   "starbucks.com": "starbucks",
   "mcdonalds.com": "mcdonalds",
   "uber.com": "uber",
   "lyft.com": "lyft",
+  "doordash.com": "doordash",
+  "airbnb.com": "airbnb",
   "nike.com": "nike",
+  "samsung.com": "samsung",
+  "sony.com": "sony",
+  "ford.com": "ford",
+  "bmw.com": "bmw",
   "usaa.com": "usaa",
+  "centerpointenergy.com": "centerpointenergy",
+  "x.ai": "x",
+  "squareup.com": "square",
   "walgreens.com": "walgreens",
   "cvs.com": "cvs",
 };
@@ -93,7 +116,7 @@ export function candidatesForName(name: string): LogoHit[] {
   return domain ? candidateUrls(domain) : [];
 }
 
-export function sourceLabel(source: string): string {
+export function sourceLabel(source: LogoSourceName): string {
   switch (source) {
     case "preferred":
       return "Iconic mark";
@@ -103,8 +126,10 @@ export function sourceLabel(source: string): string {
       return "Favicon";
     case "upload":
       return "Your file";
+    case "url":
+      return "Pasted URL";
     default:
-      return source;
+      return assertNever(source);
   }
 }
 
@@ -120,8 +145,11 @@ export function viaLabel(via?: string): string {
       return "from email";
     case "guess":
       return "guessed from name";
-    default:
+    case undefined:
+    case "":
       return "";
+    default:
+      return via;
   }
 }
 
@@ -140,4 +168,31 @@ export async function composeFromFile(file: File): Promise<string> {
   }
   if (file.size > 3_000_000) throw new Error("Keep uploads under 3 MB");
   return readAsDataUrl(file);
+}
+
+export async function composeFromUrl(raw: string): Promise<string> {
+  const trimmed = raw.trim();
+  if (!/^https?:\/\//i.test(trimmed)) throw new Error("Paste an http(s) image URL");
+  const res = await fetch(trimmed, { mode: "cors" });
+  if (!res.ok) throw new Error("Could not fetch that image");
+  const blob = await res.blob();
+  if (!blob.type.startsWith("image/") && blob.type !== "image/svg+xml") {
+    throw new Error("That URL is not an image");
+  }
+  if (blob.size > 3_000_000) throw new Error("Keep images under 3 MB");
+  return readAsDataUrl(blob);
+}
+
+/** Embed a remote logo as a data URL so the downloaded vCard is self-contained. */
+export async function embedSrc(src: string): Promise<string> {
+  if (src.startsWith("data:image/")) return src;
+  try {
+    const res = await fetch(src, { mode: "cors" });
+    if (!res.ok) return src;
+    const blob = await res.blob();
+    if (blob.size < 40 || blob.size > 1_500_000) return src;
+    return await readAsDataUrl(blob);
+  } catch {
+    return src;
+  }
 }
