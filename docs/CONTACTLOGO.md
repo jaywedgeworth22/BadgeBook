@@ -4,9 +4,14 @@ ContactLogo is the one product: brand icons for the address book, review-first,
 on macOS, iOS, and the web. Live site: [contact-logo.grok.me](https://contact-logo.grok.me).
 
 This repository previously used two names for the same job (BadgeBook and
-Crest). Those names are retired. GitHub is `jaywedgeworth22/ContactLogo`
-(the old `jaywedgeworth22/BadgeBook` slug redirects). Local checkout:
+Crest). Those names are retired. GitHub is
+[`jaywedgeworth22/ContactLogo`](https://github.com/jaywedgeworth22/ContactLogo)
+(renamed from `jaywedgeworth22/BadgeBook`; old URLs redirect).  Local checkout:
 `~/Code/ContactLogo`.
+
+The Grok web app that also shipped at contactlogo.grok.me and bizlogo.grok.me
+is the same product — not a second app.  Crest (`jaywedgeworth22/crest`) is a
+legacy archive.
 
 The combine work stays: catalog, phones, and iconic marks from the
 imported tree at `vendor/crest` sit inside ContactLogo's review-first engine.
@@ -19,7 +24,8 @@ Complete frozen copies of both originals are in `backups/` (see
 hosts that hostname from a Grok **Publish**, not from this repository's
 Actions. A merge here does not republish the site. Until Grok is published
 again, the hosted page may still show the retired Crest name.  The unhyphenated
-`contactlogo.grok.me` host 404s.
+`contactlogo.grok.me` host 404s.  Local folder on this Mac is already
+`~/Code/ContactLogo`.
 
 ## What this product does
 
