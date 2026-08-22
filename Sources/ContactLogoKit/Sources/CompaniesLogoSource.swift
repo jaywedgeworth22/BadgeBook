@@ -126,7 +126,7 @@ public struct CompaniesLogoSource: LogoSource, Sendable {
               let slug = Self.pickSlug(catalog: catalog, domain: domain, name: name),
               let page = URL(string: "https://companieslogo.com/\(slug)/logo/") else { return [] }
         var req = URLRequest(url: page)
-        req.setValue("ContactLogo/1.0 (https://contact-logo.grok.me)", forHTTPHeaderField: "User-Agent")
+        req.setValue("ContactLogo/1.0 (https://contactlogo.com)", forHTTPHeaderField: "User-Agent")
         req.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
         req.timeoutInterval = 8
         guard let (data, resp) = try? await session.data(for: req),

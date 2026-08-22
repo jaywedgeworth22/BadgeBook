@@ -3,7 +3,7 @@
   "private": true,
   "license": "Apache-2.0",
   "description": "ContactLogo — brand icons for your address book",
-  "homepage": "https://contact-logo.grok.me",
+  "homepage": "https://contactlogo.com",
   "scripts": {
     "dev": "npm run dev --prefix web",
     "build": "npm run build --prefix web",

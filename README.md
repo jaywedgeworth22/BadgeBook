@@ -4,7 +4,7 @@
 the companies behind them, and puts a clean, recognizable logo on every
 business card — so "Walgreens" shows the red W, not a grey monogram.
 
-**Site:** [contact-logo.grok.me](https://contact-logo.grok.me)
+**Site:** [ContactLogo.com](https://contactlogo.com)
 **Repo:** [jaywedgeworth22/ContactLogo](https://github.com/jaywedgeworth22/ContactLogo)
 
 Three shells, one engine:

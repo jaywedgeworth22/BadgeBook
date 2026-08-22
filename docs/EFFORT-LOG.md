@@ -15,6 +15,8 @@ CI — see Planned rows below.
 
 - **2026-08-21 — AG — COMPLETED — Web, iOS, macOS, Android PWA enhancements & power features.**  Two-way Google Contacts write sync (`updateGoogleContactPhoto` with write scope), in-browser safe-ring canvas studio (`padAndSquareImage`), instant search & smart filter bar with live circle-mask toggle, iOS swipe triage & live simulator sheet (incoming call / iMessage), macOS keyboard shortcuts (Cmd+Return, Cmd+Z, Cmd+Shift+A), expanded offline company catalog.  PR #8 merged.
 
+- **2026-08-22 — AG — COMPLETED — Xcode project (iOS & macOS), ContactLogo.com domain alignment, Android app build.**  Xcode project generation with iOS 17+ min deployment, document format 26 compatibility, bundle IDs `com.contactlogo` and `com.contactlogo.macos`, display name `ContactLogo`, category `utilities`, Dev Team `CC8UTF7ATG`, verified on iOS simulator with screenshot, domain aligned everywhere to `ContactLogo.com` / `https://contactlogo.com` (GitHub metadata, package.json, web, docs), and full native Android application in `Apps/ContactLogoAndroid` built and verified (`app-debug.apk`).  PR merged.
+
 ## In Progress
 - (none)
 
