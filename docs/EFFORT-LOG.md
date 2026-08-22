@@ -13,8 +13,10 @@ CI — see Planned rows below.
 - **2026-08-21 — CURSOR — COMPLETED — Preserve Crest+BadgeBook merge into the live app.**  Uncommitted kit/web/PWA/Google-import/iOS review work committed with backups.  `vendor/crest/` subtree kept.  Best ideas stay in ContactLogoKit + `web/`.
 - **2026-08-21 — KIMI — COMPLETED — [P0] PRIVACY INCIDENT: purged `.badgebook/` from git history.**  Board item 3b9ca6cf.  Removed scan dumps, match results, review HTML, and UUID-keyed candidate PNGs from all commits via `git filter-repo` + force-push.  `.gitignore` now covers `.badgebook/`, `.contactlogo/`, scan artifacts, and AddressBook exports.  Issue #4 closed.  Residual: GitHub may cache old blobs/PR diffs until GC; issue/PR text is path-only; no forks; clones and agent transcripts are out of band.
 
+- **2026-08-21 — AG — COMPLETED — Web, iOS, macOS, Android PWA enhancements & power features.**  Two-way Google Contacts write sync (`updateGoogleContactPhoto` with write scope), in-browser safe-ring canvas studio (`padAndSquareImage`), instant search & smart filter bar with live circle-mask toggle, iOS swipe triage & live simulator sheet (incoming call / iMessage), macOS keyboard shortcuts (Cmd+Return, Cmd+Z, Cmd+Shift+A), expanded offline company catalog.  PR #8 merged.
+
 ## In Progress
-- **2026-08-21 — AG — IN PROGRESS — Web, iOS, macOS, Android PWA enhancements & power features.**  Two-way Google Contacts write sync, in-browser safe-ring canvas studio & contrast auto-badging, instant search & smart category filters, iOS swipe triage & live simulator preview, macOS keyboard navigation, expanded offline company catalog.  Branch `ag/app-enhancements-power-features`.
+- (none)
 
 ## Planned / Reserved
 - **2026-08-21 — KIMI — PLANNED — [P1] Onboard ContactLogo to the fleet + add CI.**  Board item 3b9ca6cf.  No CI despite Tests/ and web/engine.test.ts, no AGENTS.md/CLAUDE.md/.claude, no dependabot, absent from fleet-apps.json and the digest.  Copy the DealDex coordination skeleton; add macOS runner job (`swift test`) + Node job for `web/`.  `jaywedgeworth22/crest` is archived (2026-08-21); `vendor/crest` remains a subtree path, not a second product.
