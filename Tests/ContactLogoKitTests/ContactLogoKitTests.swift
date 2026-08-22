@@ -67,10 +67,16 @@ final class CompanyCatalogTests: XCTestCase {
         XCTAssertEqual(CompanyCatalog.domain(forName: "Apple Inc"), "apple.com")
         XCTAssertEqual(CompanyCatalog.domain(forName: "H-E-B"), "heb.com")
         XCTAssertEqual(CompanyCatalog.domain(forName: "The Home Depot"), "homedepot.com")
+        XCTAssertEqual(CompanyCatalog.domain(forName: "Charles Schwab"), "schwab.com")
+        XCTAssertEqual(CompanyCatalog.domain(forName: "Kroger"), "kroger.com")
+        XCTAssertEqual(CompanyCatalog.domain(forName: "Kaiser Permanente"), "kp.org")
+        XCTAssertEqual(CompanyCatalog.domain(forName: "Buc-ee's"), "buc-ees.com")
+        XCTAssertEqual(CompanyCatalog.domain(forName: "Spectrum"), "spectrum.com")
     }
     func testLocationTail() {
         XCTAssertEqual(CompanyCatalog.domain(forName: "Walgreens Mason Rd"), "walgreens.com")
         XCTAssertEqual(CompanyCatalog.domain(forName: "Walgreens (Mason Rd in Cypress)"), "walgreens.com")
+        XCTAssertEqual(CompanyCatalog.domain(forName: "Kroger Marketplace Cypress"), "kroger.com")
     }
     func testUnknown() {
         XCTAssertNil(CompanyCatalog.domain(forName: "Maya Chen"))

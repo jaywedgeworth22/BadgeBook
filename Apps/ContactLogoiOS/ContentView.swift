@@ -52,12 +52,22 @@ struct ContentView: View {
 struct ReviewQueueView: View {
     @EnvironmentObject var model: ReviewSession
     @State private var bucket: ReviewSession.Bucket = .auto
+    @State private var searchText = ""
+    @State private var previewResult: MatchResult?
 
     var rows: [MatchResult] {
+        let base: [MatchResult]
         switch bucket {
-        case .auto: model.autoAccepted
-        case .review: model.needsReview
-        case .notFound: model.notFound
+        case .auto: base = model.autoAccepted
+        case .review: base = model.needsReview
+        case .notFound: base = model.notFound
+        }
+        guard !searchText.trimmingCharacters(in: .whitespaces).isEmpty else { return base }
+        let query = searchText.lowercased()
+        return base.filter { result in
+            let name = model.displayName(for: result.contactID).lowercased()
+            let flags = result.flags.joined(separator: " ").lowercased()
+            return name.contains(query) || flags.contains(query)
         }
     }
 
@@ -83,15 +93,49 @@ struct ReviewQueueView: View {
                     .padding(.horizontal)
             }
             List(rows, id: \.contactID) { result in
-                ReviewRow(result: result)
+                ReviewRow(result: result, onPreview: {
+                    previewResult = result
+                })
+                .swipeActions(edge: .leading) {
+                    Button {
+                        model.setSelected(result.contactID, true)
+                    } label: {
+                        Label("Approve", systemImage: "checkmark")
+                    }
+                    .tint(.green)
+                }
+                .swipeActions(edge: .trailing) {
+                    if result.candidates.count > 1 {
+                        Button {
+                            model.cycleCandidate(result.contactID)
+                        } label: {
+                            Label("Next logo", systemImage: "arrow.triangle.2.circlepath")
+                        }
+                        .tint(.orange)
+                    }
+                    Button(role: .destructive) {
+                        model.setSelected(result.contactID, false)
+                    } label: {
+                        Label("Skip", systemImage: "xmark")
+                    }
+                }
             }
+            .searchable(text: $searchText, prompt: "Search brands or flags…")
+        }
+        .sheet(item: $previewResult) { result in
+            ContactSimulatorSheet(result: result)
         }
     }
+}
+
+extension MatchResult: @retroactive Identifiable {
+    public var id: String { contactID }
 }
 
 struct ReviewRow: View {
     @EnvironmentObject var model: ReviewSession
     let result: MatchResult
+    var onPreview: (() -> Void)? = nil
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -101,15 +145,36 @@ struct ReviewRow: View {
             ))
             .labelsHidden()
             .disabled(result.candidates.isEmpty)
-            LogoThumb(url: model.chosenCandidate(for: result)?.imageURL)
+            Button {
+                onPreview?()
+            } label: {
+                LogoThumb(url: model.chosenCandidate(for: result)?.imageURL)
+            }
+            .buttonStyle(.plain)
             VStack(alignment: .leading, spacing: 4) {
-                Text(model.displayName(for: result.contactID)).font(.headline)
+                HStack {
+                    Text(model.displayName(for: result.contactID)).font(.headline)
+                    Spacer()
+                    Button {
+                        onPreview?()
+                    } label: {
+                        Image(systemName: "iphone")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
                 Text(detail)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if result.candidates.count > 1 {
-                    Button("Try another") { model.cycleCandidate(result.contactID) }
-                        .font(.caption)
+                    HStack(spacing: 8) {
+                        Button("Try another") { model.cycleCandidate(result.contactID) }
+                            .font(.caption)
+                        Text("(\((model.chosenIndex[result.contactID] ?? 0) + 1)/\(result.candidates.count))")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
         }
@@ -118,7 +183,7 @@ struct ReviewRow: View {
     private var detail: String {
         let source = model.chosenCandidate(for: result)?.source.rawValue ?? "none"
         let flags = result.flags.isEmpty ? "" : " · " + result.flags.joined(separator: ", ")
-        return "\(label(result.confidence)) · \(source) · \(result.candidates.count) candidates\(flags)"
+        return "\(label(result.confidence)) · \(source)\(flags)"
     }
 
     private func label(_ c: Confidence) -> String {
@@ -127,6 +192,81 @@ struct ReviewRow: View {
         case .medium: "medium"
         case .low: "low"
         case .skip: "skip"
+        }
+    }
+}
+
+struct ContactSimulatorSheet: View {
+    @EnvironmentObject var model: ReviewSession
+    @Environment(\.dismiss) var dismiss
+    let result: MatchResult
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    Text("Live iOS Simulation")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                        .padding(.top)
+
+                    // Incoming Call Banner Simulation
+                    VStack(spacing: 12) {
+                        Text("INCOMING CALL").font(.caption2.bold()).foregroundStyle(.secondary)
+                        LogoThumb(url: model.chosenCandidate(for: result)?.imageURL)
+                            .frame(width: 88, height: 88)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
+                        Text(model.displayName(for: result.contactID))
+                            .font(.title3.bold())
+                        Text("mobile")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 40) {
+                            Circle().fill(Color.red).frame(width: 54, height: 54)
+                                .overlay(Image(systemName: "phone.down.fill").foregroundStyle(.white))
+                            Circle().fill(Color.green).frame(width: 54, height: 54)
+                                .overlay(Image(systemName: "phone.fill").foregroundStyle(.white))
+                        }
+                        .padding(.top, 4)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.gray.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+
+                    // iMessage Header Simulation
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("iMESSAGE HEADER").font(.caption2.bold()).foregroundStyle(.secondary)
+                        HStack(spacing: 12) {
+                            LogoThumb(url: model.chosenCandidate(for: result)?.imageURL)
+                                .frame(width: 42, height: 42)
+                                .clipShape(Circle())
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(model.displayName(for: result.contactID))
+                                    .font(.subheadline.bold())
+                                Text("Verified Business")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "video.fill").foregroundStyle(.blue)
+                        }
+                        .padding()
+                        .background(Color.gray.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .padding()
+            }
+            .navigationTitle(model.displayName(for: result.contactID))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
         }
     }
 }
@@ -159,7 +299,7 @@ struct LogoThumb: View {
         }
         .frame(width: 52, height: 52)
         .background(Color.gray.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(Circle())
     }
 
     @ViewBuilder
@@ -181,3 +321,4 @@ struct LogoThumb: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+

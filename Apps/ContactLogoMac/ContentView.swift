@@ -47,12 +47,21 @@ struct ContentView: View {
 
 struct ReviewQueueView: View {
     @EnvironmentObject var model: ReviewSession
+    @State private var searchText = ""
 
     var rows: [MatchResult] {
+        let base: [MatchResult]
         switch model.bucket {
-        case .auto: model.autoAccepted
-        case .review: model.needsReview
-        case .notFound: model.notFound
+        case .auto: base = model.autoAccepted
+        case .review: base = model.needsReview
+        case .notFound: base = model.notFound
+        }
+        guard !searchText.trimmingCharacters(in: .whitespaces).isEmpty else { return base }
+        let query = searchText.lowercased()
+        return base.filter { result in
+            let name = model.displayName(for: result.contactID).lowercased()
+            let flags = result.flags.joined(separator: " ").lowercased()
+            return name.contains(query) || flags.contains(query)
         }
     }
 
@@ -62,18 +71,22 @@ struct ReviewQueueView: View {
                 Text("Review queue").font(.title2.bold())
                 Spacer()
                 Button("Select high") { model.selectHigh(true) }
+                    .keyboardShortcut("a", modifiers: [.command, .shift])
                 Button("Clear high") { model.selectHigh(false) }
-                Button("Apply selected") { Task { await model.applySelected() } }
+                Button("Apply selected (\(model.selected.count))") { Task { await model.applySelected() } }
                     .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.return, modifiers: .command)
                 if model.lastBatchID != nil {
                     Button("Undo last batch") { Task { await model.undoLast() } }
+                        .keyboardShortcut("z", modifiers: .command)
                 }
             }
-            Text("High-confidence matches are pre-checked.  Favicon fallbacks, guessed domains, and contacts that already have a photo stay in Needs review.")
+            Text("High-confidence matches are pre-checked. Favicon fallbacks, guessed domains, and contacts with existing photos stay in Needs review.")
                 .foregroundStyle(.secondary)
             List(rows, id: \.contactID) { result in
                 ReviewRow(result: result)
             }
+            .searchable(text: $searchText, prompt: "Search brands or domains…")
         }
     }
 }
@@ -97,8 +110,13 @@ struct ReviewRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if result.candidates.count > 1 {
-                    Button("Try another") { model.cycleCandidate(result.contactID) }
-                        .font(.caption)
+                    HStack(spacing: 8) {
+                        Button("Try another") { model.cycleCandidate(result.contactID) }
+                            .font(.caption)
+                        Text("(\((model.chosenIndex[result.contactID] ?? 0) + 1)/\(result.candidates.count))")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
         }

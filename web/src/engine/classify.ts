@@ -18,6 +18,7 @@ export type BookContact = {
   photoDataUrl?: string;
   hadExistingPhoto?: boolean;
   importSource?: "file" | "google" | "device";
+  googleResourceName?: string;
 };
 
 const FREEMAIL = new Set([

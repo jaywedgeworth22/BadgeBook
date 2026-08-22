@@ -3,11 +3,16 @@ import {
   type BookContact,
 } from "./engine/classify.ts";
 import { looksLikeContactCsv, parseGoogleCsv } from "./engine/csv.ts";
-import { importGoogleContacts } from "./engine/google-contacts.ts";
+import {
+  importGoogleContacts,
+  requestAccessToken,
+  updateGoogleContactPhoto,
+} from "./engine/google-contacts.ts";
 import {
   composeFromFile,
   composeFromUrl,
   embedSrc,
+  padAndSquareImage,
   sourceLabel,
   viaLabel,
 } from "./engine/logos.ts";
@@ -16,12 +21,17 @@ import { canPickDeviceContacts, pickDeviceContacts } from "./engine/picker.ts";
 import { getGoogleClientId, setGoogleClientId } from "./engine/settings.ts";
 import { backupFilename, contactsToVcard, downloadText, parseVcard } from "./engine/vcard.ts";
 
+type FilterStatus = "all" | "ready" | "review" | "notfound" | "missingphoto";
+
 type State = {
   contacts: BookContact[];
   items: ReviewItem[];
   stage: "idle" | "review";
   notice: string;
   showSettings: boolean;
+  searchQuery: string;
+  filterStatus: FilterStatus;
+  showCircleMask: boolean;
 };
 
 const state: State = {
@@ -30,6 +40,9 @@ const state: State = {
   stage: "idle",
   notice: "",
   showSettings: false,
+  searchQuery: "",
+  filterStatus: "all",
+  showCircleMask: true,
 };
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -55,6 +68,8 @@ function adopt(contacts: BookContact[], label: string) {
   state.contacts = contacts;
   state.items = matchBook(contacts);
   state.stage = "review";
+  state.searchQuery = "";
+  state.filterStatus = "all";
   state.notice = `${label}: ${contacts.length} contact${contacts.length === 1 ? "" : "s"}.  Review every logo before download.`;
   render();
 }
@@ -123,17 +138,62 @@ function downloadBackup() {
 }
 
 async function downloadUpdated() {
-  state.notice = "Embedding approved logos…";
+  state.notice = "Embedding and formatting approved logos…";
   render();
   const updated = applySelected();
   for (const contact of updated) {
-    if (contact.photoDataUrl && !contact.photoDataUrl.startsWith("data:")) {
-      contact.photoDataUrl = await embedSrc(contact.photoDataUrl);
+    if (contact.photoDataUrl) {
+      const embedded = await embedSrc(contact.photoDataUrl);
+      contact.photoDataUrl = await padAndSquareImage(embedded);
     }
   }
   downloadText("contactlogo-contacts.vcf", contactsToVcard(updated), "text/vcard;charset=utf-8");
   state.notice = "Download started.  Import the vCard back into your address book.";
   render();
+}
+
+async function syncToGoogleContacts() {
+  const clientId = getGoogleClientId();
+  if (!clientId) {
+    state.notice = "Configure Google Client ID in Settings first.";
+    state.showSettings = true;
+    render();
+    return;
+  }
+  try {
+    state.notice = "Requesting Google Contacts write permission…";
+    render();
+    const token = await requestAccessToken(clientId, true);
+    const selectedItems = state.items.filter((i) => i.selected && i.candidates[i.chosenIndex]);
+    const googleTargets = selectedItems.filter((i) => i.contact.googleResourceName);
+    if (googleTargets.length === 0) {
+      state.notice = "No selected contacts originated from Google Contacts to sync.";
+      render();
+      return;
+    }
+    let done = 0;
+    let failed = 0;
+    for (const item of googleTargets) {
+      const hit = item.candidates[item.chosenIndex];
+      if (!hit || !item.contact.googleResourceName) continue;
+      state.notice = `Syncing photo to Google: ${done + 1}/${googleTargets.length} (${item.contact.displayName})…`;
+      render();
+      try {
+        const embedded = await embedSrc(hit.src);
+        const squared = await padAndSquareImage(embedded);
+        await updateGoogleContactPhoto(item.contact.googleResourceName, squared, token);
+        item.contact.hadExistingPhoto = true;
+        done += 1;
+      } catch (err) {
+        failed += 1;
+      }
+    }
+    state.notice = `Google Contacts sync complete: ${done} updated${failed > 0 ? `, ${failed} failed` : ""}.`;
+    render();
+  } catch (err) {
+    state.notice = err instanceof Error ? err.message : "Google sync failed";
+    render();
+  }
 }
 
 function setAllHigh(selected: boolean) {
@@ -178,8 +238,9 @@ function tryAnother(item: ReviewItem) {
 
 function card(item: ReviewItem): HTMLElement {
   const hit = item.candidates[item.chosenIndex];
+  const thumbClass = `thumb${state.showCircleMask ? " circle-mask" : ""}`;
   const thumb = hit
-    ? el("img", { class: "thumb", src: hit.src, alt: item.contact.displayName })
+    ? el("img", { class: thumbClass, src: hit.src, alt: item.contact.displayName })
     : el("div", { class: "noimg" }, "?");
   const check = el("input", { type: "checkbox" }) as HTMLInputElement;
   check.checked = item.selected;
@@ -271,7 +332,7 @@ function settingsPanel(): HTMLElement {
     el(
       "p",
       { class: "meta" },
-      "Optional Google People API client id for Import Google Contacts.  Stored only in this browser.  Contacts themselves stay in memory.",
+      "Optional Google People API client id for Import and Direct Sync to Google Contacts.  Stored only in this browser.",
     ),
     input,
     save,
@@ -297,7 +358,7 @@ export function render() {
       el(
         "p",
         {},
-        "Brand icons for your address book.  Import a vCard, Google CSV, Google Contacts, or this phone, review every match, then download an updated card.  Existing person photos are never replaced.  Business photos already on a card stay in Needs review.",
+        "Brand icons for your address book.  Import a vCard, Google CSV, Google Contacts, or this phone, review every match, then download an updated card or sync directly to Google.  Existing person photos are never replaced.",
       ),
     ),
   );
@@ -335,11 +396,47 @@ export function render() {
     if (f) void importFile(f);
   });
   app.append(drop);
-  if (state.notice) app.append(el("p", { class: "meta" }, state.notice));
+  if (state.notice) app.append(el("p", { class: "meta notice-banner" }, state.notice));
 
   if (state.stage === "review") {
     const groups = bucket(state.items);
     const people = state.contacts.filter((c) => classifyContact(c) === "person").length;
+
+    // Filter items based on searchQuery & filterStatus
+    const query = state.searchQuery.trim().toLowerCase();
+    const matchesSearch = (item: ReviewItem) => {
+      if (!query) return true;
+      const d = item.contact.displayName.toLowerCase();
+      const org = (item.contact.organization || "").toLowerCase();
+      const dom = (item.domain || "").toLowerCase();
+      const q = item.query.toLowerCase();
+      const ph = (item.contact.phone || "").toLowerCase();
+      return d.includes(query) || org.includes(query) || dom.includes(query) || q.includes(query) || ph.includes(query);
+    };
+
+    const searchInput = el("input", {
+      type: "search",
+      class: "search-input",
+      placeholder: "Search contacts by brand, domain, phone…",
+      value: state.searchQuery,
+    }) as HTMLInputElement;
+    searchInput.addEventListener("input", () => {
+      state.searchQuery = searchInput.value;
+      render();
+    });
+
+    const circleMaskToggle = el("label", { class: "mask-toggle" });
+    const maskCheckbox = el("input", { type: "checkbox" }) as HTMLInputElement;
+    maskCheckbox.checked = state.showCircleMask;
+    maskCheckbox.addEventListener("change", () => {
+      state.showCircleMask = maskCheckbox.checked;
+      render();
+    });
+    circleMaskToggle.append(maskCheckbox, el("span", {}, "Circle mask preview"));
+
+    const searchBar = el("div", { class: "search-bar" }, searchInput, circleMaskToggle);
+    app.append(searchBar);
+
     app.append(
       el(
         "div",
@@ -350,6 +447,7 @@ export function render() {
         el("div", { class: "stat" }, el("b", {}, String(people)), " People left alone"),
       ),
     );
+
     const selectHigh = el("button", { class: "btn secondary", type: "button" }, "Select all high-confidence");
     selectHigh.addEventListener("click", () => setAllHigh(true));
     const clearHigh = el("button", { class: "btn ghost", type: "button" }, "Clear high-confidence");
@@ -358,10 +456,23 @@ export function render() {
     backup.addEventListener("click", downloadBackup);
     const save = el("button", { class: "btn", type: "button" }, "Download approved vCard");
     save.addEventListener("click", () => void downloadUpdated());
-    app.append(el("div", { class: "toolbar" }, selectHigh, clearHigh, backup, save));
-    app.append(section("Ready to apply", groups.auto));
-    app.append(section("Needs review", groups.review));
-    app.append(section("Not found / not a brand", groups.notFound));
+
+    const toolbarItems = [selectHigh, clearHigh, backup, save];
+    const hasGoogleContacts = state.contacts.some((c) => Boolean(c.googleResourceName));
+    if (hasGoogleContacts) {
+      const googleSyncBtn = el("button", { class: "btn secondary google-sync-btn", type: "button" }, "⚡ Apply to Google Contacts");
+      googleSyncBtn.addEventListener("click", () => void syncToGoogleContacts());
+      toolbarItems.push(googleSyncBtn);
+    }
+    app.append(el("div", { class: "toolbar" }, ...toolbarItems));
+
+    const filteredAuto = groups.auto.filter(matchesSearch);
+    const filteredReview = groups.review.filter(matchesSearch);
+    const filteredNotFound = groups.notFound.filter(matchesSearch);
+
+    if (filteredAuto.length > 0 || !query) app.append(section("Ready to apply", filteredAuto));
+    if (filteredReview.length > 0 || !query) app.append(section("Needs review", filteredReview));
+    if (filteredNotFound.length > 0 || !query) app.append(section("Not found / not a brand", filteredNotFound));
   }
 
   app.append(
@@ -373,3 +484,4 @@ export function render() {
   );
   root.append(app);
 }
+

@@ -14,7 +14,7 @@ CI — see Planned rows below.
 - **2026-08-21 — KIMI — COMPLETED — [P0] PRIVACY INCIDENT: purged `.badgebook/` from git history.**  Board item 3b9ca6cf.  Removed scan dumps, match results, review HTML, and UUID-keyed candidate PNGs from all commits via `git filter-repo` + force-push.  `.gitignore` now covers `.badgebook/`, `.contactlogo/`, scan artifacts, and AddressBook exports.  Issue #4 closed.  Residual: GitHub may cache old blobs/PR diffs until GC; issue/PR text is path-only; no forks; clones and agent transcripts are out of band.
 
 ## In Progress
-- (none)
+- **2026-08-21 — AG — IN PROGRESS — Web, iOS, macOS, Android PWA enhancements & power features.**  Two-way Google Contacts write sync, in-browser safe-ring canvas studio & contrast auto-badging, instant search & smart category filters, iOS swipe triage & live simulator preview, macOS keyboard navigation, expanded offline company catalog.  Branch `ag/app-enhancements-power-features`.
 
 ## Planned / Reserved
 - **2026-08-21 — KIMI — PLANNED — [P1] Onboard ContactLogo to the fleet + add CI.**  Board item 3b9ca6cf.  No CI despite Tests/ and web/engine.test.ts, no AGENTS.md/CLAUDE.md/.claude, no dependabot, absent from fleet-apps.json and the digest.  Copy the DealDex coordination skeleton; add macOS runner job (`swift test`) + Node job for `web/`.  `jaywedgeworth22/crest` is archived (2026-08-21); `vendor/crest` remains a subtree path, not a second product.
